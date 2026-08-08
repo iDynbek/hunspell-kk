@@ -1,0 +1,14 @@
+{
+  "manifest_version": 2,
+  "name": "Qazaq Spellchecking Dictionary — Қазақша емле сөздігі",
+  "description": "Kazakh (kk) spelling dictionary for Firefox and Thunderbird. Қазақ тілінің емле тексеру сөздігі.",
+  "version": "0.1.0",
+  "browser_specific_settings": {
+    "gecko": {
+      "id": "kk@hunspell-kk.dictionaries"
+    }
+  },
+  "dictionaries": {
+    "kk": "dictionaries/kk-KZ.dic"
+  }
+}

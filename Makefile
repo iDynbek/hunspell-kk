@@ -5,7 +5,7 @@ KAZDICT   ?= ../kazdict/data/build/kazdict.db
 KAZNLP    ?= ../kaznlp/kaznlp/morphology/mdl/sfx
 KAZNERD   ?= ../KazNERD/KazNERD
 
-.PHONY: help dict aff dic check data lexicon names names-wp paradigm typos chains harmony corpus residues prune negatives baseline measure scoped running dist clean
+.PHONY: help dict aff dic check data lexicon names names-wp paradigm typos chains harmony dist-xpi corpus residues prune negatives baseline measure scoped running dist clean
 
 help:
 	@echo "make dict      generate dict/kk_KZ.aff and dict/kk_KZ.dic"
@@ -127,6 +127,17 @@ dist-clean: aff
 
 # A LibreOffice extension is a zip with the dictionary, a registration file
 # telling it which locales the pair serves, and a manifest naming that file.
+# Firefox and Thunderbird take dictionaries as a web extension: a manifest
+# naming the locale, the pair beside it, zipped with an .xpi suffix.
+dist-xpi: dict
+	@rm -rf dist/xpi && mkdir -p dist/xpi/dictionaries
+	cp package/xpi/manifest.json dist/xpi/
+	cp dict/kk_KZ.aff dist/xpi/dictionaries/kk-KZ.aff
+	cp dict/kk_KZ.dic dist/xpi/dictionaries/kk-KZ.dic
+	cd dist/xpi && zip -q -r ../kk_KZ.xpi . && cd ../..
+	@rm -rf dist/xpi
+	@ls -l dist/kk_KZ.xpi
+
 dist: dict
 	@mkdir -p dist/clean
 	@rm -rf dist && mkdir -p dist/build/META-INF
