@@ -13,9 +13,15 @@ recall            35.8%
 rejected        146,165
   affix gap      66,073   45.2%   stem is a headword, the rules cannot reach the form
   wordlist gap   80,092   54.8%   no analysis of the form is a headword
+false accepts      1,027    2.1%   of 50,000 known non-words
 ```
 
-Reproduce it with `make baseline`.
+Reproduce it with `make baseline`. The two rejection causes want different
+work, which is why they are counted apart, and the false-accept rate is there
+because recall on its own is trivially gamed: a dictionary that accepts every
+string scores 100%. Loosening the affix conditions trades one against the
+other, so a change is only an improvement if it moves recall without moving
+that last line.
 
 ## Why it rejects two forms in three
 
@@ -56,16 +62,33 @@ one this fills — *"there is no standard tool yet to generate these combination
 from simple n-fold descriptions."*
 
 [kazsearch-py](https://github.com/iDynbek/kazsearch-py) already carries the
-n-fold description: nine suffix layers with their harmony classes and
-attachment conditions. `tools/gen_aff.py` folds those layers down to the two
-levels hunspell strips, so the source of truth stays the layered model and the
-`.aff` is generated from it — the same arrangement as `rules.lua` in the
-KOReader plugin.
+n-fold description: nine suffix layers in their attachment order, each suffix
+tagged with the vowel harmony it demands. `tools/gen_aff.py` folds those layers
+down to the two levels hunspell strips, so the source of truth stays the
+layered model and the `.aff` is generated from it — the same arrangement as
+`rules.lua` in the KOReader plugin.
 
 ```
 nominal   level 1 = DERIV × PLUR × POSS     level 2 = CASE × PRED
 verbal    level 1 = VVOICE × VNEG           level 2 = VTENSE × VPERSON
 ```
+
+That model is not sufficient on its own. It drives a *stemmer*, and stemming
+only has to strip what might be a suffix; it never has to decide which shape a
+suffix takes. Generating does. The model knows `-лар` and `-дар` and `-тар` are
+all plural, not that `мектеп` selects the third — so a generator built from it
+alone would emit `*мектеплер`.
+
+The 2009 affix file is exactly the missing half, and gets it right:
+
+```
+SFX A 0 дар [жзлмнң]…    SFX A 0 лар [аоуұыэйру]…    SFX A 0 тар [бвгғдкқпстфхһцчшщ]…
+```
+
+So the generator takes the layer ordering from the model and the allomorph
+conditions from the baseline, and `tools/negatives.py` is what keeps the second
+half honest: it corrupts real forms along both axes — harmony, `-лар` → `-лер`,
+and voicing, `-тар` → `-лар` — to build strings the phonology forbids.
 
 ## Layout
 
@@ -74,11 +97,12 @@ verbal    level 1 = VVOICE × VNEG           level 2 = VTENSE × VPERSON
 | `baseline/` | the 2009 release, byte for byte, for comparison |
 | `dict/` | generated `kk_KZ.aff` and `kk_KZ.dic` |
 | `tools/gen_aff.py` | the layered model → a two-level `.aff` |
-| `tools/measure.py` | recall, split into affix gap and wordlist gap |
+| `tools/measure.py` | recall, split into affix gap and wordlist gap, plus false accepts |
+| `tools/negatives.py` | non-words built by corrupting real forms |
 
-`tests/corpus_cyr.txt` is generated from kazsearch-py and not committed: it is
-third-party text of uncertain provenance, and vendoring it would attach that
-question to the dictionary's licence.
+`tests/corpus_cyr.txt` and `tests/negatives.txt` are generated from kazsearch-py
+and not committed: the corpus is third-party text of uncertain provenance, and
+vendoring it would attach that question to the dictionary's licence.
 
 ## Licence
 

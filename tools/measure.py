@@ -33,6 +33,7 @@ DEFAULT_KAZSEARCH = Path(os.environ.get("KAZSEARCH_SRC", ROOT.parent / "kazsearc
 # dictionary's licence.
 DEFAULT_CORPUS = "tests/golden_corpus.tsv"
 CORPUS_CACHE = ROOT / "tests/corpus_cyr.txt"
+NEGATIVES = ROOT / "tests/negatives.txt"
 
 CYRILLIC_WORD = re.compile(r"^[Ѐ-ӿ]+$")
 
@@ -116,6 +117,16 @@ def classify(misses: list[str], heads: set[str], ladder) -> tuple[list[str], lis
     return morph, vocab
 
 
+def false_accepts(base: Path, negatives: list[str]) -> int:
+    """How many known non-words the dictionary waves through.
+
+    Without this, recall means nothing: a dictionary that accepts every string
+    scores 100%. Loosening the affix conditions to reach more real forms trades
+    directly against this number, so the two are only meaningful together.
+    """
+    return len(negatives) - len(spellcheck(base, negatives))
+
+
 def report(name: str, total: int, morph: list[str], vocab: list[str]) -> float:
     misses = len(morph) + len(vocab)
     recall = (1 - misses / total) * 100
@@ -138,6 +149,8 @@ def main() -> int:
     ap.add_argument("--against", type=Path, help="also measure this and show the delta")
     ap.add_argument("--corpus", type=Path, help="word list or golden TSV to test with")
     ap.add_argument("--kazsearch", type=Path, default=DEFAULT_KAZSEARCH)
+    ap.add_argument("--negatives", type=Path, default=NEGATIVES,
+                    help="non-words the dictionary must reject (tools/negatives.py)")
     ap.add_argument("--misses", type=Path, help="directory to dump rejections into")
     args = ap.parse_args()
 
@@ -151,11 +164,19 @@ def main() -> int:
 
     words = load_corpus(args)
 
+    negatives = []
+    if args.negatives and args.negatives.exists():
+        negatives = args.negatives.read_text(encoding="utf-8").split()
+
     results = {}
     for base in filter(None, [args.dictionary, args.against]):
         heads = headwords(base.parent / (base.name + ".dic"))
         morph, vocab = classify(spellcheck(base, words), heads, ladder)
         results[base] = report(str(base), len(words), morph, vocab)
+        if negatives:
+            bad = false_accepts(base, negatives)
+            print(f"  false accepts  {bad:>8,}   {bad / len(negatives) * 100:4.1f}%"
+                  f"   of {len(negatives):,} known non-words")
         if args.misses:
             args.misses.mkdir(parents=True, exist_ok=True)
             for kind, ws in (("affix", morph), ("wordlist", vocab)):
