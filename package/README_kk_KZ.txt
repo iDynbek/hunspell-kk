@@ -1,5 +1,5 @@
 		Kazakh spelling dictionary for Hunspell
-		version 0.1.4
+		version 0.2.0
 
 INSTALLING IN LIBREOFFICE
 
@@ -14,7 +14,7 @@ locative. A spelling dictionary therefore stands or falls on its affix rules,
 and the one that has been in circulation since 2009 allows a word exactly one
 suffix. This one allows the chains the language actually uses.
 
-On a million words of real Kazakh news prose it accepts 97.7%, flagging about
+On a million words of real Kazakh news prose it accepts 97.9%, flagging about
 one word in 43. Of realistic misspellings it catches 95.4%. The 2009 release accepts 82.1%, flagging about one in 5.5.
 
 WHAT IS IN IT
@@ -70,7 +70,7 @@ _______________________________________________________________
 бір-ақ жалғау жалғай алады. Бұл сөздік тілде нақты кездесетін жалғау
 тізбектерін таниды.
 
-Бір миллион сөзден тұратын нақты қазақ мәтінінде бұл сөздік 97,7% сөзді
+Бір миллион сөзден тұратын нақты қазақ мәтінінде бұл сөздік 97,9% сөзді
 таниды, яғни әрбір 43-ші сөзді ғана белгілейді. 2009 жылғы нұсқа — 82,1%,
 әрбір 5-6 сөздің бірін белгілейді.
 

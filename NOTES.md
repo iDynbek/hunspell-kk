@@ -545,6 +545,35 @@ epenthesis pass came along. Constitution 96.2% → 96.4% raw, 99.3% on genuine
 text; Labour Code 99.1%, telecom 98.6%; guards unmoved — negatives 2.4%, typos
 95.4%, both paradigm grids 100%.
 
+## Locking v0.2 on the Constitution
+
+Working the Constitution's genuine flags down to 99.74% (from 99.32% at v0.1.4,
+96.23% at the first look) meant four more pieces of verb and stem morphology,
+each generated and then validated against apertium-kaz before it went in:
+
+**Participle declension.** The perfect participle `-ған` and the habitual
+`-атын` are deverbal and decline — `құрылғанға`, `ашқандарға`, `істейтіндерге`,
+`кетірілгендерден`. This is pervasive in legal Kazakh, where a modifying clause
+becomes a case-marked participle, and the paradigm had only the bare form. The
+habitual takes the `-н-` series dative (`оқитына`, not `*оқитынға`), which
+Apertium pinned.
+
+**The `з`/`ш`-final passive.** The phonological class merges `ж/з/л`, but their
+passive allomorph differs — `кел` → `келін`, `өткіз` → `өткізіл` — so residues
+built from `кел` never covered `өткіз`. Adding `сез`, `аш`, `тұрғыз` to the
+test stems filled the gap: `өткізіледі`, nine tokens in one document.
+
+**Elision beyond the corpus and the glide present.** `мүлік` → `мүлкі` and
+`жой` → `жояды` are regular but were unattested in the training corpus.
+`data/extra_forms.txt` holds the forms — generated from eliding stems and
+`й`-final verbs, kept only where Apertium gives a clean analysis, 193 in all.
+
+The verbal grid is now 11,658 forms at 100%, and running-text coverage rose to
+97.9% by token, 94.9% by type, with false accepts unmoved at 2.4%. What is left
+on the Constitution is the file's own legacy-font corruption and a handful of
+rare loanwords (`консультативтік`, `квазимемлекеттік`) that Apertium does not
+carry either.
+
 ## Candidate targets
 
 Numbers that could serve as targets, with what is known about each.

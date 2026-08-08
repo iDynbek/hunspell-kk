@@ -130,6 +130,7 @@ def main() -> int:
     ap.add_argument("--harmony", type=Path, default=ROOT / "data/harmony.tsv")
     ap.add_argument("--compounds", type=Path, default=ROOT / "data/compounds.txt")
     ap.add_argument("--epenthesis", type=Path, default=ROOT / "data/epenthesis.txt")
+    ap.add_argument("--extra", type=Path, default=ROOT / "data/extra_forms.txt")
     ap.add_argument("--without", default="",
                     help="comma-separated sources; drop entries only they vouch for")
     ap.add_argument("--pruned", type=Path, default=ROOT / "data/prune.txt",
@@ -154,11 +155,10 @@ def main() -> int:
         tally[tracks] += 1
         lines.append(entry(word, tracks))
 
-    extra = read_extra_forms(args.epenthesis)
+    extra = read_extra_forms(args.epenthesis) + read_extra_forms(args.extra)
     lines.extend(extra)
     if extra:
-        print(f"added {len(extra):,} Apertium-validated epenthesis forms",
-              file=sys.stderr)
+        print(f"added {len(extra):,} Apertium-validated forms", file=sys.stderr)
 
     args.output.parent.mkdir(parents=True, exist_ok=True)
     args.output.write_text(f"{len(lines)}\n" + "\n".join(sorted(set(lines))) + "\n",

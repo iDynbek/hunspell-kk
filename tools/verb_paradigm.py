@@ -40,7 +40,8 @@ SIBILANT = frozenset("жз")
 # rather than `тапу` in the infinitive. A grid of regular stems should not be
 # asked to predict it, and the first run of this test blamed the dictionary for
 # four forms that were the generator's fault.
-STEMS = ["оқы", "сөйле", "кел", "ал", "көр", "бер", "айт", "жаз", "кет", "сат"]
+STEMS = ["оқы", "сөйле", "кел", "ал", "көр", "бер", "айт", "жаз", "кет",
+         "сат", "сез", "аш", "тұрғыз"]  # сез/аш/тұрғыз cover з/ш-final passive allomorphs
 
 
 def pick(back: str, front: str, stem: str) -> str:
@@ -228,6 +229,40 @@ def nonfinite(stem: str) -> list[tuple[str, str]]:
     ]
 
 
+# The participles decline. `-ған` (perfect) and `-атын`/`-йтін` (habitual) are
+# deverbal, and take the whole case grid and plural like an adjective:
+# `құрылғанға`, `ашқандарға`, `істейтіндерге`, `кетірілгендерден`. This is
+# everywhere in legal Kazakh — a clause modifying a noun becomes a case-marked
+# participle — and the paradigm had only the bare participle.
+PARTICIPLE_CASES = (
+    ("dat", "ға", "ге"), ("loc", "да", "де"), ("abl", "нан", "нен"),
+    ("gen", "ның", "нің"), ("acc", "ды", "ді"), ("ins", "мен", "мен"),
+    ("p3", "ы", "і"), ("p3.acc", "ын", "ін"), ("p3.dat", "ына", "іне"),
+    ("p3.loc", "ында", "інде"), ("p3.abl", "ынан", "інен"),
+    ("pl", "дар", "дер"), ("pl.dat", "дарға", "дерге"),
+    ("pl.gen", "дардың", "дердің"), ("pl.acc", "дарды", "дерді"),
+    ("pl.abl", "дардан", "дерден"), ("pl.loc", "дарда", "дерде"),
+)
+
+
+def participles(stem: str) -> list[tuple[str, str]]:
+    voiceless = stem[-1] in VOICELESS
+    perfect = stem + (pick("қан", "кен", stem) if voiceless
+                      else pick("ған", "ген", stem))
+    habitual = present_stem(stem) + pick("тын", "тін", stem)
+    out = []
+    for base, tag in ((perfect, "past"), (habitual, "hab")):
+        for label, back, front in PARTICIPLE_CASES:
+            # The habitual `-тын` ends in `-н` and so takes the `-н-` series
+            # dative — `оқитына`, not `*оқитынға`, exactly as a noun after a
+            # third-person possessive does.
+            if tag == "hab" and label == "dat":
+                out.append((f"part.{tag}.{label}", base + pick("а", "е", stem)))
+            else:
+                out.append((f"part.{tag}.{label}", base + pick(back, front, stem)))
+    return out
+
+
 # The verbal noun `-у` is a noun and takes the whole case grid on top: `жасау`
 # gives `жасауға`, `жасауда`, `жасауы`, `жасауын`, `жасауымен`. This is one of
 # the commonest constructions in formal Kazakh — `қабылдануға`, `қатыспауы` —
@@ -263,6 +298,7 @@ def paradigm(stem: str) -> list[tuple[str, str]]:
                 out.append((f"{polarity}.{tense}.{name}", word))
         out += [(f"{polarity}.{label}", word) for label, word in nonfinite(base)]
         out += [(f"{polarity}.{label}", word) for label, word in verbal_noun(base)]
+        out += [(f"{polarity}.{label}", word) for label, word in participles(base)]
     out += [(label, word) for label, word in imperatives(stem)]
     return out
 
