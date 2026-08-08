@@ -6,7 +6,7 @@
 **Tags:** kazakh, kk, kk-KZ, spelling, spellcheck, қазақша, емле
 
 **Short description:**
-Spelling dictionary for Kazakh (kk-KZ). Accepts 97.7% of real Kazakh text
+Spelling dictionary for Kazakh (kk-KZ). Accepts 97.9% of real Kazakh text
 where the widespread 2009 dictionary accepts 82%, with full nominal and
 verbal inflection.
 
@@ -22,8 +22,8 @@ and locative, and a dictionary that allows only one suffix per word — as the
 correct words in three. This dictionary generates the suffix chains the
 language actually uses.
 
-Measured on a million words of Kazakh news text it accepts 97.7%, flagging
-about one word in 44; the complete nominal and verbal inflection grids are
+Measured on a million words of Kazakh news text it accepts 97.9%, flagging
+about one word in 48; the complete nominal and verbal inflection grids are
 covered. It knows the proper names of Kazakhstan — Тоқаев, Айзере, Алматы,
 inflected — and the official-document spellings of common names.
 

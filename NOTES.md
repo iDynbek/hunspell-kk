@@ -13,7 +13,7 @@ answers the same questions in the same syntax.
 |---|---|---|---|---|---|---|
 | Turkish | 75,909 | 59,266 | 59,266 | num | 2.2M | 35M |
 | Hungarian | 97,581 | 131 | 24,542 | char | 2.5M | 1.7M |
-| Kazakh (this) | 85,794 | 330 | 19,590 | num | 0.4M | 1.6M |
+| Kazakh (this) | 130,959 | 283 | 8,096 | num | 0.2M | 2.5M |
 | Icelandic | 193,170 | 333 | 12,949 | num | 0.3M | 2.4M |
 | Polish | 348,901 | 52 | 7,410 | char | 0.3M | 5.2M |
 | Czech | 261,167 | 28 | 2,713 | char | 0.1M | 3.5M |
@@ -85,7 +85,7 @@ The English dictionary on every Linux desktop scores 21%, because
 `en_US` is deliberately scoped to common English in 47,553 entries and 50 affix
 rules. The number measures the corpus at least as much as the dictionary.
 
-The same effect is visible inside this project: 76.7% on modern Kazakh, 46.7%
+The same effect is visible inside this project: 77.0% on modern Kazakh, 44.8%
 on the historical scope, from one dictionary against one build of one corpus.
 
 ## Types are not tokens
@@ -179,7 +179,7 @@ happen to".
 
 It showed a real gap. On its `alma.test`, 122 hand-written forms, it scored
 113 and this dictionary 98 — a 20,853-entry hand-built file beating a
-102,034-entry generated one, because its rules cover the grid by construction
+130,959-entry generated one, because its rules cover the grid by construction
 while mined rules only know the chains a corpus contained.
 
 `tools/paradigm.py` generates the grid from the allomorph rules directly rather
@@ -283,7 +283,7 @@ the 2009 release catches 95.9% and this caught 80.0%: one in five silently.
 
 The gap is not one bad component. Composition was the obvious suspect and it is
 not — turning it off buys 1.0 point of catching for 0.8 of recall, roughly
-one-for-one all the way down. It is structural. 102,034 entries and 20,505
+one-for-one all the way down. It is structural. 130,959 entries and 8,096
 rules accept a far larger set of strings than 54,063 and 2,593 do, and a
 mistyped word is likelier to land on one of them. Coverage and catching are the
 same knob.
@@ -589,7 +589,7 @@ where a false reject is a visible one.
 user-facing number. The 2009 release is at 82.1%. Two fifths of the remainder
 is proper names, so the reachable part is smaller than 3.4% suggests.
 
-**Modern-scope recall, currently 76.9%.** The affix gap is 3,212 forms against
+**Modern-scope recall, currently 77.0%.** The affix gap is 3,212 forms against
 a wordlist gap of 38,766, so this is now almost entirely a vocabulary question.
 Unclear what ceiling is meaningful: the residual reduces to 36,918 distinct
 stems at 1.22 forms per stem, so there is no small set of additions that moves

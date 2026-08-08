@@ -1,6 +1,6 @@
 # Debian BTS — email to submit@bugs.debian.org
 
-Subject: hunspell-kk: new upstream replaces the 2009 dictionary (35.8% -> 97.7%)
+Subject: hunspell-kk: new upstream replaces the 2009 dictionary (35.8% -> 97.9%)
 
 Package: hunspell-kk
 Severity: wishlist
@@ -14,7 +14,7 @@ An actively maintained replacement exists, GPL-3.0-or-later:
   https://github.com/iDynbek/hunspell-kk
   https://github.com/iDynbek/hunspell-kk/releases/tag/v0.1.0
 
-It accepts 97.7% of the same text, covers the full nominal and verbal
+It accepts 97.9% of the same text, covers the full nominal and verbal
 inflection grids, and ships a reproducible measurement harness. The README
 states the trade-off plainly: 94.0% of realistic misspellings caught against
 the 2009 file's 99.0%, the latter being a side effect of rejecting most

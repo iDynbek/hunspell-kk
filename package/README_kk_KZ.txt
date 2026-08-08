@@ -15,18 +15,19 @@ and the one that has been in circulation since 2009 allows a word exactly one
 suffix. This one allows the chains the language actually uses.
 
 On a million words of real Kazakh news prose it accepts 97.9%, flagging about
-one word in 43. Of realistic misspellings it catches 95.4%. The 2009 release accepts 82.1%, flagging about one in 5.5.
+one word in 48. Of realistic misspellings it catches 95.4%. The 2009 release
+accepts 82.1%, flagging about one in 5.5.
 
 WHAT IS IN IT
 
-  kk_KZ.dic   102,034 entries
-  kk_KZ.aff   19,590 affix rules, generated from a layered model of Kazakh
+  kk_KZ.dic   130,959 entries
+  kk_KZ.aff   8,096 affix rules, generated from a layered model of Kazakh
               morphology rather than written by hand
 
 PLEASE READ THIS BEFORE RELYING ON IT
 
 This is a first release and it has not been used in anger. Against a test set
-of 50,000 deliberately malformed words it wrongly accepts 2.3%, where the 2009
+of 50,000 deliberately malformed words it wrongly accepts 2.4%, where the 2009
 release accepts 1.8% — the price of reaching three times as many real forms.
 In practice that means it will occasionally fail to underline a misspelling.
 If that matters more to you than false underlining, the older dictionary is
@@ -62,7 +63,7 @@ the Rust core of pg-kazsearch.
 _______________________________________________________________
 
 		Hunspell-ге арналған орфографиялық қазақ тілі сөздігі
-		0.1.0 нұсқасы
+		0.2.0 нұсқасы
 
 Қазақ тілі жалғамалы тіл: мектептерімізде сөзі мектеп түбіріне көптік, тәуелдік
 және жатыс жалғауларынан құралған. Сондықтан сөздіктің сапасы оның жалғау
@@ -71,13 +72,13 @@ _______________________________________________________________
 тізбектерін таниды.
 
 Бір миллион сөзден тұратын нақты қазақ мәтінінде бұл сөздік 97,9% сөзді
-таниды, яғни әрбір 43-ші сөзді ғана белгілейді. 2009 жылғы нұсқа — 82,1%,
+таниды, яғни әрбір 48-ші сөзді ғана белгілейді. 2009 жылғы нұсқа — 82,1%,
 әрбір 5-6 сөздің бірін белгілейді.
 
 ЕСКЕРТУ
 
 Бұл — алғашқы нұсқа, әлі нақты жұмыста қолданылған жоқ. Әдейі бұрмаланған
-50 000 сөзден тұратын тексеру жиынында ол 2,3% қате сөзді дұрыс деп таниды
+50 000 сөзден тұратын тексеру жиынында ол 2,4% қате сөзді дұрыс деп таниды
 (2009 жылғы нұсқада — 1,8%). Яғни кейде қатені белгілемей кетуі мүмкін.
 
 Күрделі сөздер мен латын әліпбиі әзірше қолданылмайды.

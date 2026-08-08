@@ -5086,6 +5086,7 @@ iсмет	-	baseline
 алуа	n	apertium,baseline,kazdict,kaznerd,wikipedia
 алуан	n	apertium,baseline,kazdict
 алуандас	n	kazdict
+алуандылық	n	manual
 алуандық	n	apertium
 алуантүрлілік	n	apertium
 алуафұрұш	-	kazdict
@@ -22156,6 +22157,7 @@ iсмет	-	baseline
 біртүрлі	n	apertium,kazdict
 біртұтам	n	kazdict
 біртұтас	n	apertium,baseline,kazdict
+біртұтастық	n	manual
 біруақтылық	-	baseline
 біруақытта	n	apertium
 біруыс	n	kazdict
@@ -55764,6 +55766,7 @@ iсмет	-	baseline
 квазар	n	apertium
 квазарлар	-	baseline,kazdict
 квази	-	kazdict
+квазимемлекеттік	n	manual
 квалиметрия	-	kazdict
 квалификация	-	baseline
 квалификацияла	v	apertium
@@ -59457,7 +59460,9 @@ iсмет	-	baseline
 консультанттар	-	baseline
 консультанттары	-	baseline
 консультанттарға	-	baseline
+консультатив	n	manual
 консультативт	-	baseline
+консультативтік	n	manual
 консультация	n	apertium,baseline
 консультациялық	n	apertium
 консультациясын	-	baseline
@@ -75348,6 +75353,7 @@ iсмет	-	baseline
 наговор	-	kazdict
 нагорнов	n	apertium
 наград	n	kazdict
+награда	n	manual
 наградта	-	kazdict
 наградтал	-	kazdict
 наградталу	-	kazdict
@@ -85910,6 +85916,7 @@ iсмет	-	baseline
 сайланатындық	n	apertium
 сайланбалы	-	baseline
 сайланушы	-	baseline
+сайланым	n	manual
 сайланған	n	apertium
 сайлап	-	baseline
 сайлат	v	apertium,baseline
