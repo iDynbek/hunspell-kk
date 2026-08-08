@@ -203,6 +203,109 @@ def winners(weight: collections.Counter, shape_of) -> set:
             or count >= best[context, shape_of(morpheme)] * MINORITY_SHARE}
 
 
+def segment(text: str, inventory: set[str]) -> list[str] | None:
+    """Break a suffix string into its morphemes, longest first."""
+    if not text:
+        return []
+    for k in range(min(len(text), 6), 0, -1):
+        if text[:k] in inventory:
+            rest = segment(text[k:], inventory)
+            if rest is not None:
+                return [text[:k]] + rest
+    return None
+
+
+# How far a composed tail may run. Kazakh stacks four suffixes and the first is
+# already in level one, so three more reaches everything ordinary; letting it
+# run further mostly invents chains nobody writes.
+MAX_COMPOSED = 2
+
+# A transition seen once is as likely to be a stemmer misanalysis as a real
+# adjacency, and one bad transition multiplies through every walk that touches
+# it.
+MIN_BIGRAM = 2
+
+
+def harmony_of(morpheme: str) -> str | None:
+    """Which harmony a morpheme commits to, or None if it takes either."""
+    for ch in morpheme:
+        if ch in "аоуұы":
+            return "b"
+        if ch in "әеөүі":
+            return "f"
+    return None
+
+
+def harmony_pairs(inventory: set[str]) -> dict[str, dict[str, str]]:
+    """Morphemes grouped by what they are, indexed by the harmony they wear.
+
+    `-ымыз` and `-іміз` are one suffix, so evidence for either is evidence for
+    both. Folding the vowels gives the shared key; keeping the initial consonant
+    is what makes it safe, since that is chosen by the morpheme in front rather
+    than by harmony, and `-лар` and `-лер` both end in `р` regardless.
+    """
+    pairs = collections.defaultdict(dict)
+    for morpheme in inventory:
+        folded = morpheme.translate(HARMONY_FOLD)
+        harmony = harmony_of(morpheme)
+        for slot in (("b", "f") if harmony is None else (harmony,)):
+            pairs[folded][slot] = morpheme
+    return pairs
+
+
+def compose(level2, inventory):
+    """Extend each group with chains its morphemes attest but the corpus did not.
+
+    A tail has so far had to have been seen end to end, which is why
+    `мектептерімізде` is rejected: the string `терімізде` appears nowhere in
+    227,637 forms, though `тер`, `іміз` and `де` all do, in that order.
+    Recording adjacency instead of whole strings and walking it recovers them.
+
+    Adjacency is recorded on the harmony-folded morpheme, so `-ымыз` followed
+    by `-да` in a back word is also evidence for `-іміз` followed by `-де` in a
+    front one. Without that the two harmonies each have to attest every chain
+    separately, and the front half of the language is much the thinner in this
+    corpus.
+
+    The walk still cannot invent a wrong allomorph, because a transition is
+    keyed on the morpheme in front of it and folding leaves the initial
+    consonant alone — `-ның` after `-лар` stays unreachable unless something
+    attested it. Nor can it invent a wrong order: an adjacency the corpus never
+    showed does not exist to be walked.
+    """
+    pairs = harmony_pairs(inventory)
+
+    # (track, folded morpheme) -> what has followed it, folded, and how often
+    after = collections.defaultdict(collections.Counter)
+    for (track, _harmony, (_strip, s1)), tails in level2.items():
+        for tail in tails:
+            parts = segment(tail, inventory)
+            if parts is None:
+                continue
+            for prev, nxt in zip([s1] + parts, parts):
+                after[track, prev.translate(HARMONY_FOLD)][
+                    nxt.translate(HARMONY_FOLD)] += 1
+
+    added = 0
+    for key in list(level2):
+        track, harmony, (_strip, s1) = key
+        frontier = [("", s1, 0)]
+        while frontier:
+            tail, prev, depth = frontier.pop()
+            if depth >= MAX_COMPOSED:
+                continue
+            for folded, count in after[track, prev.translate(HARMONY_FOLD)].items():
+                nxt = pairs.get(folded, {}).get(harmony)
+                if nxt is None or count < MIN_BIGRAM:
+                    continue
+                grown = tail + nxt
+                frontier.append((grown, nxt, depth + 1))
+                if grown not in level2[key]:
+                    level2[key].add(grown)
+                    added += 1
+    return added
+
+
 def build(rows, inventory):
     """(class → its level-one rules, continuation group → its level-two rules)."""
     def cont_key(cls: str, s1: str) -> tuple[str, str, str]:
@@ -258,7 +361,8 @@ def build(rows, inventory):
                 continue
             level1[cls][s1] = key
             level2[key].add(tail)
-    return level1, level2, unsplit, rejected
+    composed = compose(level2, inventory)
+    return level1, level2, unsplit, rejected, composed
 
 
 def render(level1, level2) -> str:
@@ -283,7 +387,7 @@ def render(level1, level2) -> str:
             condition = UNVOICED if not strip and s1 in voicing else "."
             out.append(f"SFX {flag} {strip or 0} {append} {condition}")
 
-    out.append("\n# Level two: the rest of the chain, one string per attested form.")
+    out.append("\n# Level two: the rest of the chain, one string per rule.")
     for key in sorted(level2):
         tails = sorted(level2[key])
         out.append(f"\nSFX {cont_flag[key]} N {len(tails)}")
@@ -303,7 +407,7 @@ def main() -> int:
     args = ap.parse_args()
 
     rows = read_residues(args.residues)
-    level1, level2, unsplit, rejected = build(rows, morphemes(args.kazsearch))
+    level1, level2, unsplit, rejected, composed = build(rows, morphemes(args.kazsearch))
     text = render(level1, level2)
 
     n1 = sum(len(v) for v in level1.values())
@@ -312,6 +416,8 @@ def main() -> int:
           f"{len(level2):,} continuation groups", file=sys.stderr)
     print(f"{rejected:,} residues dropped as a minority allomorph, "
           f"{len(unsplit):,} with no morpheme boundary", file=sys.stderr)
+    print(f"{composed:,} level-two rules composed from attested morpheme pairs",
+          file=sys.stderr)
 
     if args.check:
         current = args.check.read_text(encoding="utf-8")

@@ -3,7 +3,7 @@
 |  | entries | recall | affix gap | wordlist gap | false accepts |
 |---|---|---|---|---|---|
 | 2009 release | 54,063 | 35.8% | 66,073 | 80,092 | 2.1% |
-| generated | 91,336 | **76.2%** | **5,472** | **48,810** | 5.7% |
+| generated | 89,389 | **77.3%** | **3,376** | **48,304** | 5.6% |
 
 Against 227,637 Kazakh word forms and 50,000 known non-words, hunspell 1.7.3.
 `make measure` reproduces it.
@@ -137,18 +137,33 @@ word that is both, like `бала`, cannot say which track a suffix belongs to, 
 counting it for both would put every verbal ending back on the nominal side.
 Such words still inflect both ways; they just do not get a vote.
 
-### What is left
+### Sound changes
 
-The affix file only knows the suffix chains the corpus attested, so a legal but
-unseen one is rejected: `мектептерімізде` appears nowhere in 227,637 forms and
-is not accepted, even though every one of its four suffixes is. Composing tails
-from attested morpheme pairs rather than whole attested strings would reach
-them.
+A stem-final voiceless stop voices before a vowel: `кітап` is `кітабы`, `бақ`
+is `бағы`, `жүрек` is `жүрегі`. 2,824 corpus forms do this, and the miner used
+to slice each form at the stem's length, which read `кітабы` as `кітап` + `ы` —
+so the file generated `*кітапы` and got the real form only from a padded
+headword. The rules now strip: take `п` off, put `бы` on, and keep the plain
+rule for the same suffix off those three letters.
 
-`адамдың` is still accepted, now for a different reason: `адамды` survives in
-the wordlist as a 2009 padded form, because dropping it would cost `адамдық`
-and its inflections, which are not headwords in their own right. Entering the
-derivations properly is what removes it.
+Vowel elision, `орын` → `орны`, is not handled. It is 77 forms, and it takes a
+vowel out of the middle rather than replacing the last letter.
+
+### Chains nobody wrote down
+
+A level-two tail had to have been attested end to end, which rejected
+`мектептерімізде`: the string `терімізде` appears nowhere in 227,637 forms,
+though `тер`, `іміз` and `де` all do, in that order. `gen_aff.py` records
+morpheme *adjacency* instead and walks it, so a chain is reachable when each of
+its steps is.
+
+Adjacency is recorded on the harmony-folded morpheme, so `-ымыз` before `-да`
+in a back word is evidence for `-іміз` before `-де` in a front one — without
+that each harmony has to attest every chain separately, and the front half of
+the language is much the thinner in this corpus. Folding leaves the initial
+consonant alone, which is what keeps the walk from inventing an allomorph:
+`-ның` after `-лар` stays unreachable unless something attested it, and an
+order the corpus never showed does not exist to be walked.
 
 ## Layout
 
