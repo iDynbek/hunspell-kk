@@ -1,0 +1,8 @@
+__pycache__/
+*.pyc
+
+# generated from kazsearch-py, see README
+tests/corpus_cyr.txt
+
+# measure.py --misses dumps
+out/
