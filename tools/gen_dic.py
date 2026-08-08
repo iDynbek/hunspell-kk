@@ -8,17 +8,30 @@ the end, out of reach of any condition the 2009 file could write.
 
     python tools/gen_dic.py -o dict/kk_KZ.dic
 
-The wordlist itself is still the 2009 one. It carries inflected forms as
-headwords in their own right — `абай`, `абайдан` and `абайдың` are three
-separate entries — and de-inflating those is separate work; entering a form
-twice costs a little size and no correctness.
+The wordlist itself is still the 2009 one, which carries inflected forms as
+headwords in their own right: `абай`, `абайдан` and `абайдың` are three
+separate entries. That padding was how a one-suffix affix file coped, and it is
+no longer paying for itself — worse, an inflected form entered as a stem gets a
+class flag of its own and lets suffixes stack on top of an already-inflected
+word, which is where `*аккумуляторыдың` comes from.
+
+`--prune` drops the ones the affix file can regenerate. Which those are is
+settled by asking Hunspell rather than by reasoning about morphology: build the
+dictionary without every candidate at once, and keep back whatever it then
+rejects. Doing them all together is the conservative direction — a word only
+goes if it survives the removal of everything else that might have explained
+it — and it keeps derivations like `абайсыздық`, which are separate lexemes the
+rules cannot and should not produce.
 """
 
 from __future__ import annotations
 
 import argparse
 import collections
+import os
+import subprocess
 import sys
+import tempfile
 from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
@@ -27,6 +40,9 @@ from gen_aff import CLASS_FLAG  # noqa: E402
 from kkphon import stem_class  # noqa: E402
 
 ROOT = Path(__file__).resolve().parent.parent
+DEFAULT_KAZSEARCH = Path(os.environ.get("KAZSEARCH_SRC", ROOT.parent / "kazsearch-py"))
+
+UNCAPPED = 1024
 
 
 def read_wordlist(path: Path) -> list[str]:
@@ -39,16 +55,36 @@ def read_wordlist(path: Path) -> list[str]:
     return list(seen)
 
 
+def entry(word: str) -> str:
+    return f"{word}/{CLASS_FLAG[stem_class(word.lower())]}"
+
+
+def read_pruned(path: Path) -> set[str]:
+    """Headwords tools/prune.py found the affix file makes unnecessary."""
+    if not path.exists():
+        return set()
+    return {line.strip() for line in path.read_text(encoding="utf-8").splitlines()
+            if line.strip() and not line.startswith("#")}
+
+
 def main() -> int:
     ap = argparse.ArgumentParser(description=__doc__,
                                  formatter_class=argparse.RawDescriptionHelpFormatter)
     ap.add_argument("-o", "--output", type=Path, default=ROOT / "dict/kk_KZ.dic")
     ap.add_argument("--source", type=Path, default=ROOT / "baseline/kk_KZ.dic")
+    ap.add_argument("--pruned", type=Path, default=ROOT / "data/prune.txt",
+                    help="headwords to drop; see tools/prune.py")
     args = ap.parse_args()
 
     words = read_wordlist(args.source)
-    tally = collections.Counter()
 
+    gone = read_pruned(args.pruned)
+    if gone:
+        words = [w for w in words if w not in gone]
+        print(f"dropped {len(gone):,} headwords the affix file regenerates",
+              file=sys.stderr)
+
+    tally = collections.Counter()
     lines = []
     for word in words:
         cls = stem_class(word.lower())

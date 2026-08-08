@@ -1,7 +1,7 @@
 PY ?= python3
 KAZSEARCH ?= ../kazsearch-py
 
-.PHONY: help dict aff dic check residues negatives baseline measure clean
+.PHONY: help dict aff dic check residues prune negatives baseline measure clean
 
 help:
 	@echo "make dict      generate dict/kk_KZ.aff and dict/kk_KZ.dic"
@@ -23,6 +23,9 @@ check:
 
 tests/corpus_cyr.txt:
 	$(PY) tools/measure.py baseline/kk_KZ --kazsearch $(KAZSEARCH) >/dev/null
+
+prune: tests/corpus_cyr.txt
+	$(PY) tools/prune.py --kazsearch $(KAZSEARCH) -o data/prune.txt
 
 residues: tests/corpus_cyr.txt
 	$(PY) tools/mine_residues.py --kazsearch $(KAZSEARCH) -o data/residues.tsv
