@@ -8,7 +8,7 @@ occurs — which is what a reader actually sees:
 | 2009 release | 82.1% | 1 word in 5.5 |
 | generated | **97.8%** | 1 word in 45 |
 
-Counting each word *type* once instead, on the same text: 58.2% → **94.4%**.
+Counting each word *type* once instead, on the same text: 58.2% → **94.5%**.
 The two differ because running text is dominated by common words, and the
 type count is the harsher test. `make running` reproduces both, against
 [KazNERD](https://github.com/IS2AI/KazNERD) (CC-BY-4.0).

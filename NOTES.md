@@ -168,6 +168,36 @@ taking names from the same text one is scored against turns the score into a
 memory test. On the held-out split the names are worth +0.8pp by token and
 +1.8pp by type.
 
+## Paradigms measure what corpus recall cannot
+
+[TLemur/hunspell-kk](https://github.com/TLemur/hunspell-kk), a hand-built
+Kazakh dictionary abandoned in 2017, ships something none of the twelve
+production dictionaries do: `tests/` containing the complete inflection of one
+word. That is a better completeness measure than corpus recall, because recall
+cannot distinguish "the language does not do this" from "the corpus did not
+happen to".
+
+It showed a real gap. On its `alma.test`, 122 hand-written forms, it scored
+113 and this dictionary 98 — a 20,853-entry hand-built file beating a
+102,034-entry generated one, because its rules cover the grid by construction
+while mined rules only know the chains a corpus contained.
+
+`tools/paradigm.py` generates the grid from the allomorph rules directly rather
+than from the affix file, so it is a test and not a restatement. Validating it
+against TLemur's hand-written list found four errors in it — accusative after
+`-р` is `-ды` not `-ны`, the dative after a first or second person singular
+possessive is a bare `-а`, and it was missing predicative endings and the
+adjectival `-дағы`. Worth doing before trusting any generated test.
+
+The first run then reported gaps that were also the generator's fault: it asked
+for `мектепім`, which is not a word, because it did not voice the stem-final
+stop. `мектебім`. A generated test is only as good as its generator, and both
+of those would have been invisible without an independent list to check against.
+
+Feeding the grid back in as authoritative residues took completeness from 83.9%
+to 100%, with no cost in false accepts. Against the same grid TLemur is at
+90.5% and the 2009 release at 28.0%.
+
 ## Candidate targets
 
 Numbers that could serve as targets, with what is known about each.
@@ -188,6 +218,10 @@ a wordlist gap of 38,766, so this is now almost entirely a vocabulary question.
 Unclear what ceiling is meaningful: the residual reduces to 36,918 distinct
 stems at 1.22 forms per stem, so there is no small set of additions that moves
 it much.
+
+**Paradigm completeness, currently 100%** on sixteen stems, one per
+phonological class. Cheap to extend: the verbal grid is not covered at all, and
+it is much the larger of the two.
 
 **Suggestion quality, currently unmeasured.** No harness exists, no baseline
 exists, and no comparison dictionary publishes one either. Whatever is measured

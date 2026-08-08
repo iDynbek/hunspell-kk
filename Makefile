@@ -5,7 +5,7 @@ KAZDICT   ?= ../kazdict/data/build/kazdict.db
 KAZNLP    ?= ../kaznlp/kaznlp/morphology/mdl/sfx
 KAZNERD   ?= ../KazNERD/KazNERD
 
-.PHONY: help dict aff dic check data lexicon names names-wp chains harmony corpus residues prune negatives baseline measure scoped running dist clean
+.PHONY: help dict aff dic check data lexicon names names-wp paradigm chains harmony corpus residues prune negatives baseline measure scoped running dist clean
 
 help:
 	@echo "make dict      generate dict/kk_KZ.aff and dict/kk_KZ.dic"
@@ -13,6 +13,7 @@ help:
 	@echo "make measure   measure dict/ against the 2009 release"
 	@echo "make baseline  measure the 2009 release on its own"
 	@echo "make running   measure on real running text, weighted by word frequency"
+	@echo "make paradigm  check the full nominal grid of one stem per class"
 	@echo "make scoped    measure per source scope: modern, glossing, historical"
 	@echo "make data      rebuild everything under data/ (needs the sources)"
 	@echo "make dist      package dist/kk_KZ.oxt for LibreOffice"
@@ -39,6 +40,7 @@ data:
 	$(MAKE) lexicon
 	$(MAKE) chains
 	$(MAKE) residues
+	$(MAKE) paradigm
 	$(MAKE) aff
 	$(MAKE) harmony
 	$(MAKE) prune
@@ -64,6 +66,12 @@ residues: tests/corpus_cyr.txt
 
 # Loanword harmony, which no rule over the letters recovers: банк takes
 # банктен, конференция takes конференцияда.
+# Corpus recall cannot tell "the language does not do this" from "the corpus
+# did not happen to". The nominal grid is closed, so it can.
+paradigm:
+	$(PY) tools/paradigm.py --write tests/paradigms.tsv \
+		--residues data/paradigm.tsv dict/kk_KZ
+
 harmony: tests/corpus_cyr.txt
 	$(PY) tools/mine_harmony.py --kazsearch $(KAZSEARCH) --kaznerd $(KAZNERD) \
 		-o data/harmony.tsv

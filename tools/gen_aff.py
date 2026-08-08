@@ -476,12 +476,15 @@ def main() -> int:
                                  formatter_class=argparse.RawDescriptionHelpFormatter)
     ap.add_argument("-o", "--output", type=Path)
     ap.add_argument("--check", type=Path, help="exit non-zero if this file is stale")
-    ap.add_argument("--residues", type=Path, default=ROOT / "data/residues.tsv")
+    ap.add_argument("--residues", type=Path, nargs="+",
+                    default=[ROOT / "data/residues.tsv",
+                             ROOT / "data/paradigm.tsv"])
     ap.add_argument("--chains", type=Path, default=ROOT / "data/chains.tsv")
     ap.add_argument("--kazsearch", type=Path, default=DEFAULT_KAZSEARCH)
     args = ap.parse_args()
 
-    rows = read_residues(args.residues)
+    rows = [row for path in args.residues if path.exists()
+            for row in read_residues(path)]
     level1, level2, elisions, unsplit, rejected, composed, grafted = build(
         rows, morphemes(args.kazsearch), read_chains(args.chains))
     text = render(level1, level2, elisions)
