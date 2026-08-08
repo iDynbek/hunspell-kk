@@ -51,6 +51,22 @@ def read_lexicon(path: Path, without: frozenset = frozenset()) -> dict[str, str]
     return out
 
 
+def read_extra_forms(path: Path) -> list[str]:
+    """Fully-inflected forms added as their own entries, no affix flag.
+
+    The consonant-cluster loanwords — `акт`, `туризм`, `объект` — take an
+    epenthetic vowel whose presence, harmony and scope vary per lexeme
+    (`актіге` but `спортқа`, `банкке` but `туризмі`), too irregular for a class.
+    Each form here was generated and then validated by apertium-kaz with a
+    clean, non-error analysis, so they are listed outright rather than
+    generated. See the epenthesis audit.
+    """
+    if not path.exists():
+        return []
+    return [line.strip() for line in path.read_text(encoding="utf-8").splitlines()
+            if line.strip() and not line.startswith("#")]
+
+
 def read_pruned(path: Path) -> set[str]:
     """Headwords tools/prune.py found the affix file makes unnecessary."""
     if not path.exists():
@@ -113,6 +129,7 @@ def main() -> int:
     ap.add_argument("--elide", type=Path, default=ROOT / "data/elide.txt")
     ap.add_argument("--harmony", type=Path, default=ROOT / "data/harmony.tsv")
     ap.add_argument("--compounds", type=Path, default=ROOT / "data/compounds.txt")
+    ap.add_argument("--epenthesis", type=Path, default=ROOT / "data/epenthesis.txt")
     ap.add_argument("--without", default="",
                     help="comma-separated sources; drop entries only they vouch for")
     ap.add_argument("--pruned", type=Path, default=ROOT / "data/prune.txt",
@@ -137,8 +154,14 @@ def main() -> int:
         tally[tracks] += 1
         lines.append(entry(word, tracks))
 
+    extra = read_extra_forms(args.epenthesis)
+    lines.extend(extra)
+    if extra:
+        print(f"added {len(extra):,} Apertium-validated epenthesis forms",
+              file=sys.stderr)
+
     args.output.parent.mkdir(parents=True, exist_ok=True)
-    args.output.write_text(f"{len(lines)}\n" + "\n".join(sorted(lines)) + "\n",
+    args.output.write_text(f"{len(lines)}\n" + "\n".join(sorted(set(lines))) + "\n",
                            encoding="utf-8")
     print(f"{len(lines):,} entries → {args.output}", file=sys.stderr)
     print("  " + "  ".join(f"{k}={v:,}" for k, v in sorted(tally.items())),

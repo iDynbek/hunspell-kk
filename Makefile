@@ -5,7 +5,7 @@ KAZDICT   ?= ../kazdict/data/build/kazdict.db
 KAZNLP    ?= ../kaznlp/kaznlp/morphology/mdl/sfx
 KAZNERD   ?= ../KazNERD/KazNERD
 
-.PHONY: help dict aff dic check data lexicon names names-wp paradigm typos chains harmony audit dist-xpi corpus residues prune negatives baseline measure scoped running dist clean
+.PHONY: help dict aff dic check data lexicon names names-wp paradigm typos chains harmony audit epenthesis dist-xpi corpus residues prune negatives baseline measure scoped running dist clean
 
 help:
 	@echo "make dict      generate dict/kk_KZ.aff and dict/kk_KZ.dic"
@@ -82,6 +82,11 @@ audit:
 	$(MAKE) aff
 	$(PY) tools/audit_apertium.py --threshold 25 -o data/apertium_veto.tsv
 	$(MAKE) aff
+
+# Consonant-cluster loanword forms, generated and validated by apertium-kaz;
+# needs the `apertium` distrobox.
+epenthesis:
+	$(PY) tools/epenthesis.py -o data/epenthesis.txt
 
 harmony: tests/corpus_cyr.txt
 	$(PY) tools/mine_harmony.py --kazsearch $(KAZSEARCH) --kaznerd $(KAZNERD) \

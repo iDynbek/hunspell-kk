@@ -1,5 +1,5 @@
 		Kazakh spelling dictionary for Hunspell
-		version 0.1.2
+		version 0.1.3
 
 INSTALLING IN LIBREOFFICE
 
