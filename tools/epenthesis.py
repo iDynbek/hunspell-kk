@@ -43,7 +43,8 @@ TRIGGERS = ("кт", "нкт", "нк", "рк", "рт", "пт", "фт", "ск", "�
 # The three patterns a cluster loanword might follow; Apertium sorts out which
 # forms of which are real per stem.
 EPENTHETIC = ("іге", "іде", "іден", "інің", "іні", "ісі", "ілер", "ілердің",
-              "ілерге", "інде", "інен", "імен", "інде")
+              "ілерге", "ілерді", "ілерін", "ілері", "інде", "інен", "імен",
+              "іне", "інің", "ісін", "ісіне", "ісінде", "ісінен", "ісінің")
 FRONT = ("ке", "те", "де", "тен", "нің", "ні", "ті", "сі", "лер", "мен", "пен")
 BACK = ("қа", "та", "да", "тан", "ның", "ны", "ты", "сы", "лар", "мен", "пен")
 
@@ -91,17 +92,15 @@ def main() -> int:
     analyses = analyze(candidates)
     valid = sorted(w for w in candidates if clean(analyses.get(w, [])))
 
-    from gen_dic import read_lexicon as _rl  # noqa: F401
-    proc = subprocess.run(
-        ["hunspell", "-d", str(ROOT / "dict/kk_KZ"), "-l"],
-        input="\n".join(valid), capture_output=True, text=True)
-    new = sorted(set(proc.stdout.split()))
-
+    # Every valid form is written, not just those the current dictionary lacks:
+    # the affix rules already make many, and gen_dic dedupes, but keying the
+    # output on the current dictionary would shrink the file on every re-run
+    # (the previous list is now "already accepted").
     args.output.write_text(
         "# consonant-cluster loanword forms apertium-kaz validates with a clean\n"
-        "# (non-error) analysis and this dictionary lacked; tools/epenthesis.py\n"
-        + "\n".join(new) + "\n", encoding="utf-8")
-    print(f"{len(valid):,} valid, {len(new):,} new → {args.output}", file=sys.stderr)
+        "# (non-error) analysis; listed outright. tools/epenthesis.py\n"
+        + "\n".join(valid) + "\n", encoding="utf-8")
+    print(f"{len(valid):,} valid forms → {args.output}", file=sys.stderr)
     return 0
 
 

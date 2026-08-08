@@ -104,6 +104,25 @@ def before_u(stem: str) -> str:
     return stem[:-1] if stem[-1:] in "ыі" else stem
 
 
+def u_form(stem: str) -> str:
+    """The verbal noun / infinitive: `оқу`, `жазу`, and `жою` from `жой`.
+
+    A final `й` fuses with the `-у` into `ю`, so the infinitive of `жой` is
+    `жою`, not `жойу`; the declined verbal noun then runs off that.
+    """
+    if stem[-1] == "й":
+        return stem[:-1] + "ю"
+    return before_u(stem) + "у"
+
+
+def glide_present(stem: str) -> str | None:
+    """`жой` + a vowel absorbs the `й`: `жоя`, not `жойа`. Every `й`-final verb
+    does this — `қой` → `қояды`, `той` → `тояды`, `сой` → `сояды`."""
+    if len(stem) >= 3 and stem[-1] == "й":
+        return stem[:-1] + pick("я", "е", stem)
+    return None
+
+
 def present_stem(stem: str) -> str:
     """The present converb: `кел` + `-е`, `айт` + `-а`, and `оқы` → `оқи`.
 
@@ -111,6 +130,9 @@ def present_stem(stem: str) -> str:
     and are written `и`. Getting this wrong produces `оқый`, which no Kazakh
     text contains — which is how the validation pass catches it.
     """
+    glide = glide_present(stem)
+    if glide:
+        return glide
     if stem[-1] in "ыі":
         return stem[:-1] + "и"
     if vowel_final(stem):
@@ -118,11 +140,32 @@ def present_stem(stem: str) -> str:
     return stem + pick("а", "е", stem)
 
 
-# `-мын` after the present and the participles; bare `-м` after the definite
-# past and the conditional. Kazakh keeps the two apart and so must this.
-FULL_PERSON = (("1sg", "мын", "мін"), ("2sg", "сың", "сің"), ("2pol", "сыз", "сіз"),
-               ("3", "", ""), ("1pl", "мыз", "міз"),
-               ("2pl", "сыңдар", "сіңдер"), ("2polpl", "сыздар", "сіздер"))
+# The copula person endings — `-мын`, `-мыз` — carry the allomorph the whole
+# language does: `-м` only after a vowel, `-б` after a voiced consonant, `-п`
+# after a voiceless one. So the present, which attaches after a vowel, is
+# `оқимын`, but the perfect after `-ған` is `оқығанбыз` not `оқығанмыз`, and the
+# negative future after `-мас` is `оқымаспын` not `оқымасмын`. Apertium caught
+# both; KazNERD had not, because the 1pl perfect is rare in news.
+
+
+def full_person(base: str) -> tuple:
+    """The predicative person endings, whose 1sg/1pl allomorph Apertium pinned.
+
+    The 1sg is `-мын` everywhere but after a voiceless consonant, where it is
+    `-пын` (`оқымаспын`). The 1pl agrees except after the perfect participle
+    `-ған`/`-ген`, where it is uniquely `-быз` (`оқығанбыз`, not `*оқығанмыз`) —
+    an irregularity the phonology does not predict and the news corpus never
+    showed.
+    """
+    voiceless = base[-1] in "кқптсшщфхһцч"
+    sg = "п" if voiceless else "м"
+    pl = "п" if voiceless else ("б" if base.endswith(("ған", "ген",
+                                                      "қан", "кен")) else "м")
+    return (("1sg", sg + "ын", sg + "ін"), ("2sg", "сың", "сің"),
+            ("2pol", "сыз", "сіз"), ("3", "", ""), ("1pl", pl + "ыз", pl + "із"),
+            ("2pl", "сыңдар", "сіңдер"), ("2polpl", "сыздар", "сіздер"))
+
+
 SHORT_PERSON = (("1sg", "м", "м"), ("2sg", "ң", "ң"), ("2pol", "ңыз", "ңіз"),
                 ("3", "", ""), ("1pl", "қ", "к"),
                 ("2pl", "ңдар", "ңдер"), ("2polpl", "ңыздар", "ңіздер"))
@@ -144,11 +187,11 @@ def tenses(stem: str) -> dict[str, tuple[str, tuple]]:
     # `айтады`, `оқиды`. Everywhere else the third person is the tense stem.
     present = present_stem(stem)
     return {
-        "pres": (present, FULL_PERSON, present + pick("ды", "ді", stem)),
+        "pres": (present, full_person(present), present + pick("ды", "ді", stem)),
         "past": (stem + past, SHORT_PERSON, None),
-        "perf": (stem + perfect, FULL_PERSON, None),
+        "perf": (stem + perfect, full_person(stem + perfect), None),
         "cond": (stem + pick("са", "се", stem), SHORT_PERSON, None),
-        "fut": (stem + presumptive, FULL_PERSON, None),
+        "fut": (stem + presumptive, full_person(stem + presumptive), None),
     }
 
 
@@ -173,7 +216,7 @@ def nonfinite(stem: str) -> list[tuple[str, str]]:
     converb = (stem + pick("п", "п", stem) if vowel_final(stem)
                else stem + pick("ып", "іп", stem))
     return [
-        ("inf", before_u(stem) + "у"),
+        ("inf", u_form(stem)),
         ("part.past", stem + perfect),
         ("part.hab", present_stem(stem) + pick("тын", "тін", stem)),
         ("part.agent", before_u(stem) + pick("ушы", "уші", stem)),
@@ -185,6 +228,32 @@ def nonfinite(stem: str) -> list[tuple[str, str]]:
     ]
 
 
+# The verbal noun `-у` is a noun and takes the whole case grid on top: `жасау`
+# gives `жасауға`, `жасауда`, `жасауы`, `жасауын`, `жасауымен`. This is one of
+# the commonest constructions in formal Kazakh — `қабылдануға`, `қатыспауы` —
+# and it applies to voice stems too, so a paradigm that stopped at the bare
+# infinitive missed a whole productive layer. The endings are the vowel-final
+# nominal set, since `-у` ends the word in a vowel-like segment.
+VERBAL_NOUN_CASES = (
+    ("nom", ""), ("gen", "дың"), ("dat", "ға"), ("acc", "ды"), ("loc", "да"),
+    ("abl", "дан"), ("ins", "мен"), ("pl", "лар"), ("pl.gen", "лардың"),
+    ("pl.dat", "ларға"), ("pl.acc", "ларды"),
+    ("p3", "ы"), ("p3.acc", "ын"), ("p3.dat", "ына"), ("p3.loc", "ында"),
+    ("p3.abl", "ынан"), ("p3.gen", "ының"), ("p1", "ым"), ("p2", "ың"),
+    ("p1pl", "ымыз"), ("p2pol", "ыңыз"),
+)
+
+
+def verbal_noun(stem: str) -> list[tuple[str, str]]:
+    noun = u_form(stem)
+    return [(f"vn.{label}", noun + pick(suf, _front(suf), stem))
+            for label, suf in VERBAL_NOUN_CASES]
+
+
+def _front(back: str) -> str:
+    return back.translate(str.maketrans("аоұығқ", "еөүігк"))
+
+
 def paradigm(stem: str) -> list[tuple[str, str]]:
     out: list[tuple[str, str]] = []
     for polarity, base in (("pos", stem), ("neg", stem + negation(stem))):
@@ -193,6 +262,7 @@ def paradigm(stem: str) -> list[tuple[str, str]]:
                 word = third if (name == "3" and third) else form + pick(back, front, base)
                 out.append((f"{polarity}.{tense}.{name}", word))
         out += [(f"{polarity}.{label}", word) for label, word in nonfinite(base)]
+        out += [(f"{polarity}.{label}", word) for label, word in verbal_noun(base)]
     out += [(label, word) for label, word in imperatives(stem)]
     return out
 
