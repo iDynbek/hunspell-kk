@@ -40,7 +40,32 @@ BACK_SUFFIX_VOWELS = frozenset("аоұы")
 FRONT_SUFFIX_VOWELS = frozenset("әеөүі")
 
 
-def suffix_harmony(residue: str) -> str | None:
+def inflectional(kazsearch: Path) -> frozenset[str]:
+    """The case, plural, possessive and predicative endings — no derivation.
+
+    Harmony evidence has to come from these and nothing else. A derivational
+    suffix carries its own harmony: `талапкер` (applicant) is `талап` plus the
+    front `-кер`, and counting its front vowel made `талап` — a plainly back
+    word, `талапқа`, `талапты` — come out front, and every plural of one of the
+    commonest words in a legal text was then rejected.
+    """
+    sys.path.insert(0, str(kazsearch / "src"))
+    from kazsearch import rules as R
+    return frozenset(r.suffix for table in
+                     ("CASE_RULES", "PLUR_RULES", "POSS_RULES", "PRED_RULES")
+                     for r in getattr(R, table))
+
+
+def suffix_harmony(residue: str, endings: frozenset[str]) -> str | None:
+    """The harmony a residue commits its stem to, or None.
+
+    Only a residue that is exactly one inflectional ending counts. `қа` and
+    `ке` do; `керге` does not, even though it opens with the dative `ке` —
+    a derivation is not evidence about the base, and a multi-suffix form can
+    hide one past the first morpheme.
+    """
+    if residue not in endings:
+        return None
     vowels = set(residue)
     if vowels & FRONT_SUFFIX_VOWELS:
         return HARM_FRONT
@@ -65,7 +90,8 @@ def blind_split(word: str, stems: set[str], suffixes: set[str]) -> str | None:
 
 
 def gather(corpus: collections.Counter, stems: set[str], ladder,
-           suffixes: set[str] = frozenset()) -> dict[str, collections.Counter]:
+           endings: frozenset[str], suffixes: set[str] = frozenset()
+           ) -> dict[str, collections.Counter]:
     """Per stem, how many tokens wore front endings and how many wore back.
 
     Weighted by frequency, since a loanword's harmony is settled by how it is
@@ -86,7 +112,7 @@ def gather(corpus: collections.Counter, stems: set[str], ladder,
         _strip, residue = alternation(stem, low)
         if not residue:
             continue
-        wears = suffix_harmony(residue)
+        wears = suffix_harmony(residue, endings)
         if wears:
             evidence[stem][wears] += weight
     return evidence
@@ -140,7 +166,8 @@ def main() -> int:
                 for line in (ROOT / "data/residues.tsv").read_text(
                     encoding="utf-8").splitlines()
                 if line and not line.startswith("#")}
-    evidence = gather(words, stems, ladder, suffixes)
+    endings = inflectional(args.kazsearch)
+    evidence = gather(words, stems, ladder, endings, suffixes)
     found = overrides(evidence, args.min_tokens, args.majority)
 
     args.output.parent.mkdir(parents=True, exist_ok=True)

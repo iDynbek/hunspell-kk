@@ -455,6 +455,38 @@ the parser extracts faithfully. FinePDFs' own `ocr_quality_scores` column was
 empty in every row sampled; a Kazakh dictionary's flag rate fills that hole,
 and for rolmOCR it says the Kazakh output needs a diacritic-restoration pass.
 
+## Two bugs a real document found
+
+A user ran the Kazakh Labour Code — 51,210 tokens of clean official prose —
+through v0.1.1 and noticed common words being flagged. Two systematic bugs, the
+same shape as each other and as earlier ones: a derivation mistaken for
+inflection.
+
+**Harmony mined from derivations.** `талап` (demand) is a plainly back word —
+`талапқа`, `талапты`, and in the Code every one of its dozen forms is back. It
+was classified *front*, so its entire plural family rejected, ~130 tokens in
+one document. The harmony miner had counted `талапкер` (applicant, `талап` plus
+the front derivational `-кер`) as evidence about `талап` itself. The fix:
+harmony evidence counts only from a residue that is exactly one *inflectional*
+ending — `қа`, `ке` — never a multi-suffix form that can hide a derivation past
+its first morpheme. 68 false overrides removed, the true loanword ones (`банк`,
+`министр`, `фильм`) kept.
+
+**Derivations pruned as if regenerable.** `бөлімше` (subdivision) is `бөлім`
+plus the derivational `-ше`, so the pruner dropped it, betting the affix file
+rebuilds it from `бөлім`. The bare form, yes — but `бөлімшеге` needs `-ше`
+followed by the dative, and no mined chain carries that, so every inflection of
+a derived lexeme absent from the training corpus was lost: `ереуілге`,
+`мезгілде`, `демалысқа`, a long legal-register tail. A word is now pruned only
+when it reduces to a shorter headword by inflection alone; a derived lexeme
+keeps its own entry and its full class paradigm.
+
+On the Code, 98.2% → 99.0% of tokens; on the held-out news split token coverage
+rose 96.8% → 97.7% and false accepts *fell* 2.8% → 2.4%, so these were real
+corrections, not a coverage-for-precision trade. The lesson repeats: the
+inflection/derivation boundary is where mined signal leaks, and every place a
+morpheme's own harmony can be attributed to the base is a bug waiting.
+
 ## Candidate targets
 
 Numbers that could serve as targets, with what is known about each.

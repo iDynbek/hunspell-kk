@@ -159,8 +159,32 @@ def main() -> int:
 
     words = read_lexicon(args.lexicon)
     sources = read_sources(args.lexicon)
+
+    # A word may only be pruned if it reduces to a shorter headword by removing
+    # *inflection* — case, plural, possessive. A word that is a shorter headword
+    # plus a derivation is a distinct lexeme with its own paradigm: `бөлімше`
+    # (subdivision) is `бөлім` plus the derivational `-ше`, and pruning it on
+    # the grounds that `бөлім+ше` regenerates the bare form loses `бөлімшеге`,
+    # because no mined chain carries `-ше` followed by every case. That broke a
+    # long tail of common legal-register words.
+    sys.path.insert(0, str(Path(__file__).resolve().parent))
+    from mine_harmony import inflectional
+    endings = inflectional(args.kazsearch)
+
+    def inflection_only(word: str, base: str) -> bool:
+        residue = word[len(base):]
+        while residue:
+            for end in sorted(endings, key=len, reverse=True):
+                if residue.startswith(end):
+                    residue = residue[len(end):]
+                    break
+            else:
+                return False
+        return True
+
     candidates = {w for w in words
-                  if any(rung in words and rung != w
+                  if any(rung in words and rung != w and w.startswith(rung)
+                         and inflection_only(w, rung)
                          for rung in ladder(w, max_rungs=UNCAPPED))}
 
     keep = {w: t for w, t in words.items() if w not in candidates}
