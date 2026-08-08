@@ -5,7 +5,7 @@ KAZDICT   ?= ../kazdict/data/build/kazdict.db
 KAZNLP    ?= ../kaznlp/kaznlp/morphology/mdl/sfx
 KAZNERD   ?= ../KazNERD/KazNERD
 
-.PHONY: help dict aff dic check data lexicon names names-wp chains corpus residues prune negatives baseline measure scoped running dist clean
+.PHONY: help dict aff dic check data lexicon names names-wp chains harmony corpus residues prune negatives baseline measure scoped running dist clean
 
 help:
 	@echo "make dict      generate dict/kk_KZ.aff and dict/kk_KZ.dic"
@@ -40,6 +40,7 @@ data:
 	$(MAKE) chains
 	$(MAKE) residues
 	$(MAKE) aff
+	$(MAKE) harmony
 	$(MAKE) prune
 	$(MAKE) dic
 
@@ -60,6 +61,12 @@ corpus tests/corpus.tsv:
 
 residues: tests/corpus_cyr.txt
 	$(PY) tools/mine_residues.py --kazsearch $(KAZSEARCH) -o data/residues.tsv
+
+# Loanword harmony, which no rule over the letters recovers: банк takes
+# банктен, конференция takes конференцияда.
+harmony: tests/corpus_cyr.txt
+	$(PY) tools/mine_harmony.py --kazsearch $(KAZSEARCH) --kaznerd $(KAZNERD) \
+		-o data/harmony.tsv
 
 prune: tests/corpus_cyr.txt
 	$(PY) tools/prune.py --kazsearch $(KAZSEARCH) -o data/prune.txt

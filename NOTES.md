@@ -100,7 +100,7 @@ Both, on the same million words of KazNERD news text:
 | | by token | by type |
 |---|---|---|
 | 2009 release | 82.1% | 58.2% |
-| this | 97.6% | 93.8% |
+| this | 97.8% | 94.4% |
 
 The type figure is the harsher test and the token figure is the honest one for
 "what will a user see". They should probably both always be quoted, because
@@ -172,14 +172,14 @@ memory test. On the held-out split the names are worth +0.8pp by token and
 
 Numbers that could serve as targets, with what is known about each.
 
-**False accepts, currently 5.9%.** The 2009 release is at 1.8%, and that is the
+**False accepts, currently 5.8%.** The 2009 release is at 1.8%, and that is the
 only external reference point available — it is not a standard, just the thing
 being replaced. Reaching 1.8% *and* keeping recall would be the strongest
 possible result; nothing establishes it is achievable. This number is also the
 one most likely to matter to a user, since a false accept is a silent failure
 where a false reject is a visible one.
 
-**Token coverage on running text, currently 97.6%.** Nearest thing to a
+**Token coverage on running text, currently 97.8%.** Nearest thing to a
 user-facing number. The 2009 release is at 82.1%. Two fifths of the remainder
 is proper names, so the reachable part is smaller than 3.4% suggests.
 
@@ -254,6 +254,33 @@ backwards. It was 18% of the reported rate.
 The lesson generalises past this instance: a negative test built by corrupting
 real text has to be sure the corruption is not itself a word, and "these two
 suffixes rhyme" is not sufficient grounds for believing it.
+
+## Loanword harmony is a fact about the word
+
+Taking harmony from the last committed vowel is right for native Kazakh and
+wrong for a great many loans. `банк` has a back vowel and takes `банктен`;
+`министр`, `фильм`, `турист` and `брифинг` all take front endings; `конференция`
+and `инфекция` go the other way and take back ones. No rule over the letters
+recovers it, so `tools/mine_harmony.py` takes it from the corpus: where a
+stem's attested suffixes wear one harmony and the classifier says the other,
+the corpus wins and the stem gets an override.
+
+This was the largest single cause of what looked like unknown vocabulary. Of
+the 2.4% of running text still flagged, 55% turned out to be a stem already in
+the wordlist and accepted on its own, whose inflected form was rejected; the
+harmony errors were the biggest slice of that.
+
+**The stemmer hides exactly this evidence.** The ladder will not take `-тен`
+off `банктен`, because its own model says `банк` is back and a back stem does
+not wear a front suffix. Asking it therefore finds evidence everywhere except
+where it is needed — 149 overrides with the ladder, 370 once a harmony-blind
+match of known suffix against known stem was added. That is the third time a
+component has concealed a fault by consulting the assumption the fault lives
+in.
+
+Correcting it moved running-text coverage from 97.6% to 97.8% and false accepts
+from 6.0% down to 5.8%, since a stem with the right harmony stops accepting the
+wrong one.
 
 ## Two things that turned out to be traps
 

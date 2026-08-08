@@ -26,7 +26,7 @@ from pathlib import Path
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 
 from gen_aff import CLASS_FLAG, ELIDE_FLAG  # noqa: E402
-from kkphon import TRACKS, stem_class  # noqa: E402
+from kkphon import TRACKS, final_class, harmony, stem_class  # noqa: E402
 
 ROOT = Path(__file__).resolve().parent.parent
 
@@ -61,9 +61,26 @@ def read_elide(path: Path) -> set[str]:
 
 ELIDES: set[str] = set()
 
+# Stems whose harmony the corpus contradicts; see tools/mine_harmony.py.
+HARMONY: dict[str, str] = {}
+
+
+def read_harmony(path: Path) -> dict[str, str]:
+    if not path.exists():
+        return {}
+    out = {}
+    for line in path.read_text(encoding="utf-8").splitlines():
+        if line and not line.startswith("#"):
+            stem, value = line.split("\t")
+            out[stem] = value
+    return out
+
 
 def entry(word: str, tracks: str = "nv") -> str:
-    phon = stem_class(word.lower())
+    low = word.lower()
+    # `банк` takes `банктен` and `конференция` takes `конференцияда`: a
+    # loanword's harmony is a fact about the word, not about its vowels.
+    phon = (HARMONY[low] + final_class(low)) if low in HARMONY else stem_class(low)
     flags = [str(CLASS_FLAG[t + phon]) for t in tracks]
     if word.lower() in ELIDES:
         flags.append(str(ELIDE_FLAG))
@@ -76,11 +93,13 @@ def main() -> int:
     ap.add_argument("-o", "--output", type=Path, default=ROOT / "dict/kk_KZ.dic")
     ap.add_argument("--lexicon", type=Path, default=ROOT / "data/lexicon.tsv")
     ap.add_argument("--elide", type=Path, default=ROOT / "data/elide.txt")
+    ap.add_argument("--harmony", type=Path, default=ROOT / "data/harmony.tsv")
     ap.add_argument("--pruned", type=Path, default=ROOT / "data/prune.txt",
                     help="headwords to drop; see tools/prune.py")
     args = ap.parse_args()
 
     ELIDES.update(read_elide(args.elide))
+    HARMONY.update(read_harmony(args.harmony))
     lexicon = read_lexicon(args.lexicon)
 
     gone = {w.lower() for w in read_pruned(args.pruned)}

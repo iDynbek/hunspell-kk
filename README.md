@@ -6,9 +6,9 @@ occurs — which is what a reader actually sees:
 | | words accepted | flagged |
 |---|---|---|
 | 2009 release | 82.1% | 1 word in 5.5 |
-| generated | **97.6%** | 1 word in 41 |
+| generated | **97.8%** | 1 word in 45 |
 
-Counting each word *type* once instead, on the same text: 58.2% → **93.8%**.
+Counting each word *type* once instead, on the same text: 58.2% → **94.4%**.
 The two differ because running text is dominated by common words, and the
 type count is the harsher test. `make running` reproduces both, against
 [KazNERD](https://github.com/IS2AI/KazNERD) (CC-BY-4.0).
@@ -27,7 +27,7 @@ of this README's numbers come from:
 
 483,752 / 11,461 / 30,256 word forms from kazdict, by the scope of the edition
 each came from, plus 50,000 constructed non-words of which the 2009 release
-accepts 1.8% and this one 5.9%. hunspell 1.7.3. `make scoped` reproduces it.
+accepts 1.8% and this one 5.8%. hunspell 1.7.3. `make scoped` reproduces it.
 
 The three columns are reported apart because the sources are not all about the
 same language, and a spellchecker for modern Kazakh *should* reject much of the
@@ -259,7 +259,7 @@ definitions barely at all.
 `make dist` builds `dist/kk_KZ.oxt`, a LibreOffice extension. For plain
 Hunspell, `dict/kk_KZ.aff` and `dict/kk_KZ.dic` are the pair.
 
-It is a first release and has not been used in anger. It accepts 5.9% of a
+It is a first release and has not been used in anger. It accepts 5.8% of a
 50,000-word set of deliberate misspellings where the 2009 release accepts 1.8%
 — the price of reaching three times as many real forms — so it will sometimes
 fail to underline a mistake. Compounds and the Latin alphabet are not handled.
