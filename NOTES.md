@@ -330,6 +330,43 @@ And the benchmark itself was checked first this time: only 5 of 2,767 accepted
 negatives appear anywhere in a million words of running text, so they were
 genuine non-words, not another `ойнайсыз`.
 
+## How the alternatives actually score
+
+Measured 2026-08 on identical samples — 1,786 token-weighted draws from the
+held-out KazNERD test split and 600 draws from the typo set — with Apertium
+queried through its public analyzer (`beta.apertium.org/apy/analyze?lang=kaz`),
+a form counting as accepted when the FST returns any analysis.
+
+| | tokens accepted | types | typos caught |
+|---|---|---|---|
+| this | 98.3% | 98.0% | 92.2% |
+| apertium-kaz, the full FST | 95.6% | 94.3% | **97.5%** |
+| 2009 kk_KZ | 82.6% | 77.1% | 99.0% |
+
+Apertium is the serious rival, and it sits at a genuinely better point on the
+strictness curve: five points more typo-catching for three points less
+coverage. Its advantage is exactly the thing mined rules lack — hand-encoded
+morphotactics, so a suffix only follows what a linguist said it may follow.
+Our advantage is vocabulary: names, loanwords, and the corpus-mined lexicon it
+does not carry. The obvious synthesis — its transition grammar constraining
+our chains — is the same idea already noted under "apertium-kaz as an analyzer
+rather than a wordlist", now with a measurement saying what it is worth.
+
+The proprietary and hosted landscape, for the record:
+
+| | Kazakh support |
+|---|---|
+| Microsoft Office | yes — kk-KZ language accessory pack, full localization with proofing tools; closed, unmeasurable from here |
+| Google Docs | none — spelling suggestions only in six major languages |
+| Apple macOS | none built-in; loads user Hunspell pairs from `~/Library/Spelling`, so this dictionary installs directly |
+| Yandex.Speller | ru/uk/en only |
+| LanguageTool | no Kazakh |
+| emle.kz («Тіл-Қазына») | orthographic *lookup* of headwords, not a morphological checker — inflected forms return «табылмады» |
+
+So for anyone outside Microsoft Office, the practical choice for Kazakh is
+this dictionary or Apertium's FST, and everything that speaks Hunspell can
+only load this one.
+
 ## Candidate targets
 
 Numbers that could serve as targets, with what is known about each.
