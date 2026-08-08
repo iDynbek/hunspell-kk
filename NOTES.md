@@ -409,9 +409,11 @@ land, and the residual is structural, not another audit away.
 
 ## Wild text: the FinePDFs check
 
-FinePDFs' `kaz_Cyrl` split — 88,596 PDF documents mined by docling and rolmOCR
-from Common Crawl — is text nothing in this pipeline ever saw: certificates,
-gazettes, scanned forms. Sampled 1,500 documents, 1.47M Cyrillic tokens:
+FinePDFs' `kaz_Cyrl` split — 88,596 PDF documents from Common Crawl — is text
+nothing in this pipeline ever saw: certificates, gazettes, scanned forms. Two
+extractors, and they are not the same kind of thing: docling parses the
+embedded text layer of born-digital PDFs, rolmOCR is a vision model reading
+scans. Sampled 1,500 documents, 1.47M Cyrillic tokens:
 
 | | tokens accepted |
 |---|---|
@@ -428,7 +430,7 @@ The 19.9% flagged decomposes, and most of it is the dictionary doing its job:
 | 46.8% | Russian — untranslated passages in bilingual official documents |
 | 22.9% | mixed: real vocabulary gap and heavier damage (`аайналдыруға`) |
 | 13.1% | OCR-flattened Kazakh, provably one letter off (`Ікімат`, `Істін`) |
-| 12.7% | capitalised, much of it OCR glyph confusion — `Ѓылыми`, `Єріптік`, `Ѕзамады` read Kazakh Ғ/Ә/Ұ as Slavic Ѓ/Є/Ѕ |
+| 12.7% | capitalised, including `Ѓылыми`, `Єріптік`, `Ѕзамады` — Kazakh Ғ/Ә/Ұ on Slavic codepoints |
 | 4.4% | one–two-letter fragments |
 
 Excluding the Russian and the provable corruption, the genuine miss rate on
@@ -436,12 +438,22 @@ wild Kazakh is bounded by the "other" bucket: about 4.6% of all text, in the
 same range as the 3.2% on news — the dictionary holds up; the flag rate
 measures the documents.
 
-Two side-findings worth keeping. The 15-point gap between extractors makes a
-Kazakh dictionary's flag rate a serviceable OCR-quality metric — FinePDFs'
-own `ocr_quality_scores` column was empty in every row sampled. And OCR
-produces a confusion family spelling normalisation never anticipated: Kazakh
-Ғ/Ә/Ұ/Һ rendered as the Slavic homoglyphs Ѓ/Є/Ѕ/Ћ, which no keyboard produces
-and no REP table currently repairs.
+Splitting the damage by extractor pins each kind to its source:
+
+| | flagged | of which Russian | flattened, one-repair | Slavic homoglyphs |
+|---|---|---|---|---|
+| docling (parsed) | 13.4% | 53.6% | 2.3% | 0.4% |
+| rolmOCR (OCR) | 28.5% | 42.5% | **20.1%** | 0.0% |
+
+The diacritic flattening — Ұ/Қ/Ғ read as У/К/Г — is nine times concentrated in
+rolmOCR: the OCR model performs poorly on Kazakh specifically, and a fifth of
+everything it gets flagged for is that one error, provably repairable by
+restoring a single letter. The Slavic homoglyphs meanwhile occur only in
+docling text: they are not OCR confusion but legacy font hacks in born-digital
+PDFs, pre-Unicode Kazakh fonts that mapped Ә/Ғ/Ұ onto Slavic codepoints, which
+the parser extracts faithfully. FinePDFs' own `ocr_quality_scores` column was
+empty in every row sampled; a Kazakh dictionary's flag rate fills that hole,
+and for rolmOCR it says the Kazakh output needs a diacritic-restoration pass.
 
 ## Candidate targets
 
