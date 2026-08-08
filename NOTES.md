@@ -88,6 +88,37 @@ rules. The number measures the corpus at least as much as the dictionary.
 The same effect is visible inside this project: 76.7% on modern Kazakh, 46.7%
 on the historical scope, from one dictionary against one build of one corpus.
 
+## Types are not tokens
+
+Every figure in this repository except the running-text one counts each word
+type once, and that overstates how much a dictionary's gaps cost a reader.
+Real prose is dominated by a small number of very common words, so missing
+`және` is not the same event as missing a word that occurs once.
+
+Both, on the same million words of KazNERD news text:
+
+| | by token | by type |
+|---|---|---|
+| 2009 release | 82.0% | 44.6% |
+| this | 96.6% | 85.6% |
+
+The type figure is the harsher test and the token figure is the honest one for
+"what will a user see". They should probably both always be quoted, because
+each answers a question the other cannot: type coverage says how complete the
+dictionary is, token coverage says how often it will be wrong in front of
+someone.
+
+What is left, at 3.4% of tokens: 1.36pp proper names, 1.52pp genuinely unknown
+words, 0.54pp one- and two-letter tokens, 0.02pp transcription disfluencies
+(`ыы`, `ээ`). Proper names being two fifths of it is worth knowing before
+treating the rest as a vocabulary problem — other dictionaries usually handle
+names with a separate list, and Hungarian and Czech both use `NOSUGGEST` and
+`FORBIDDENWORD` for related purposes.
+
+`көпбалалы` and `көпқабатты` are among the most frequent genuine rejections and
+are both compounds in `көп-`, which is the `COMPOUND*` gap showing up in real
+text rather than in theory.
+
 ## Candidate targets
 
 Numbers that could serve as targets, with what is known about each.
@@ -98,6 +129,10 @@ being replaced. Reaching 1.8% *and* keeping recall would be the strongest
 possible result; nothing establishes it is achievable. This number is also the
 one most likely to matter to a user, since a false accept is a silent failure
 where a false reject is a visible one.
+
+**Token coverage on running text, currently 96.6%.** Nearest thing to a
+user-facing number. The 2009 release is at 82.0%. Two fifths of the remainder
+is proper names, so the reachable part is smaller than 3.4% suggests.
 
 **Modern-scope recall, currently 76.7%.** The affix gap is 3,212 forms against
 a wordlist gap of 38,766, so this is now almost entirely a vocabulary question.

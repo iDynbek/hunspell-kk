@@ -6,8 +6,9 @@ locative. A spelling dictionary therefore stands or falls on its affix rules,
 and the one that has been in circulation since 2009 allows a word exactly one
 suffix. This one allows the chains the language actually uses.
 
-Measured against 483,752 word forms of modern Kazakh, it accepts 76.7% where
-the 2009 release accepts 30.1%.
+On a million words of real Kazakh news prose it accepts 96.6%, flagging about
+one word in 29. The 2009 release accepts 82.0%, flagging about one in 5.5.
+Two fifths of what is still flagged are proper names.
 
 WHAT IS IN IT
 
@@ -28,6 +29,15 @@ Compound words are not handled. Neither is the Latin alphabet.
 
 Reports of words wrongly accepted or wrongly rejected are the most useful
 thing you can send: https://github.com/iDynbek/hunspell-kk/issues
+
+MEASUREMENT
+
+The figures above come from KazNERD, an open Kazakh named-entity corpus
+released by ISSAI under CC-BY-4.0:
+
+  Yeshpanov, R., Khassanov, Y., Varol, H.A. KazNERD: Kazakh Named Entity
+  Recognition Dataset. arXiv:2111.13419, 2021.
+  https://github.com/IS2AI/KazNERD
 
 LICENCE
 
@@ -51,8 +61,9 @@ _______________________________________________________________
 бір-ақ жалғау жалғай алады. Бұл сөздік тілде нақты кездесетін жалғау
 тізбектерін таниды.
 
-Қазіргі қазақ тілінің 483 752 сөз тұлғасымен тексергенде, бұл сөздік 76,7%
-тұлғаны таниды, ал 2009 жылғы нұсқа — 30,1%.
+Бір миллион сөзден тұратын нақты қазақ мәтінінде бұл сөздік 96,6% сөзді
+таниды, яғни әрбір 29-шы сөзді ғана белгілейді. 2009 жылғы нұсқа — 82,0%,
+әрбір 5-6 сөздің бірін белгілейді.
 
 ЕСКЕРТУ
 

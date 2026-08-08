@@ -1,5 +1,24 @@
 # Kazakh dictionary for Hunspell
 
+On a million words of real Kazakh news prose, weighted by how often each word
+occurs — which is what a reader actually sees:
+
+| | words accepted | flagged |
+|---|---|---|
+| 2009 release | 82.0% | 1 word in 5.5 |
+| generated | **96.6%** | 1 word in 29 |
+
+Counting each word *type* once instead, on the same text: 44.6% → **85.6%**.
+The two differ because running text is dominated by common words, and the
+type count is the harsher test. `make running` reproduces both, against
+[KazNERD](https://github.com/IS2AI/KazNERD) (CC-BY-4.0).
+
+Of the 3.4% this still flags, 40% are proper names, and another 16% are
+one- and two-letter tokens and transcription artefacts.
+
+Against dictionary text instead — every word type once, which is where the rest
+of this README's numbers come from:
+
 | recall | modern Kazakh | Russian-glossing | historical |
 |---|---|---|---|
 | 2009 release | 30.1% | 16.8% | 10.4% |

@@ -3,14 +3,16 @@ KAZSEARCH ?= ../kazsearch-py
 APERTIUM  ?= ../apertium-kaz/apertium-kaz.kaz.lexc
 KAZDICT   ?= ../kazdict/data/build/kazdict.db
 KAZNLP    ?= ../kaznlp/kaznlp/morphology/mdl/sfx
+KAZNERD   ?= ../KazNERD/KazNERD
 
-.PHONY: help dict aff dic check data lexicon chains corpus residues prune negatives baseline measure scoped dist clean
+.PHONY: help dict aff dic check data lexicon chains corpus residues prune negatives baseline measure scoped running dist clean
 
 help:
 	@echo "make dict      generate dict/kk_KZ.aff and dict/kk_KZ.dic"
 	@echo "make check     fail if dict/kk_KZ.aff is stale"
 	@echo "make measure   measure dict/ against the 2009 release"
 	@echo "make baseline  measure the 2009 release on its own"
+	@echo "make running   measure on real running text, weighted by word frequency"
 	@echo "make scoped    measure per source scope: modern, glossing, historical"
 	@echo "make data      rebuild everything under data/ (needs the sources)"
 	@echo "make dist      package dist/kk_KZ.oxt for LibreOffice"
@@ -65,6 +67,12 @@ negatives tests/negatives.txt: tests/corpus_cyr.txt
 
 baseline: tests/negatives.txt
 	$(PY) tools/measure.py baseline/kk_KZ --kazsearch $(KAZSEARCH)
+
+# What a reader would actually see: real prose, each word weighted by how
+# often it occurs, rather than a dictionary's word types counted once each.
+running:
+	$(PY) tools/measure_running.py dict/kk_KZ baseline/kk_KZ \
+		--kaznerd $(KAZNERD) --show-misses 10
 
 scoped: tests/corpus.tsv tests/negatives.txt
 	$(PY) tools/measure.py dict/kk_KZ --against baseline/kk_KZ \
