@@ -326,6 +326,12 @@ option permits that for the material carried forward from it.
 The kazdict entries are headwords drawn from the sozdikqor corpus, which
 aggregates 60 published dictionaries. A bare list of a language's words is not
 obviously anyone's to license, but the selection may attract database rights in
-some jurisdictions, and this has not been cleared. `data/lexicon.tsv` names the
+some jurisdictions, and this has not been cleared. It also cannot be cleared
+by reading: the payload ships no licence and sozdikqor.kz carries only a
+copyright line — it is run by the Sh. Shayakhmetov National
+Scientific-Practical Center «Тіл-Қазына», the state language-development body —
+with no terms of use and no open-data declaration. Only asking them settles it;
+until then `make dist-clean` builds the variant that does not raise the
+question. `data/lexicon.tsv` names the
 source of every entry so that the kazdict-only ones can be dropped without
 rebuilding anything else.
