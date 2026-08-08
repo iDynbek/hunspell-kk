@@ -5,7 +5,7 @@ KAZDICT   ?= ../kazdict/data/build/kazdict.db
 KAZNLP    ?= ../kaznlp/kaznlp/morphology/mdl/sfx
 KAZNERD   ?= ../KazNERD/KazNERD
 
-.PHONY: help dict aff dic check data lexicon chains corpus residues prune negatives baseline measure scoped running dist clean
+.PHONY: help dict aff dic check data lexicon names chains corpus residues prune negatives baseline measure scoped running dist clean
 
 help:
 	@echo "make dict      generate dict/kk_KZ.aff and dict/kk_KZ.dic"
@@ -34,6 +34,7 @@ check:
 # arbitrary: residues are mined against the lexicon, and what is safe to prune
 # depends on what the affix file built from those residues can regenerate.
 data:
+	$(MAKE) names
 	$(MAKE) lexicon
 	$(MAKE) chains
 	$(MAKE) residues
@@ -70,9 +71,15 @@ baseline: tests/negatives.txt
 
 # What a reader would actually see: real prose, each word weighted by how
 # often it occurs, rather than a dictionary's word types counted once each.
+# The test split only: names are mined from KazNERD's training split, so
+# scoring on the whole corpus would be scoring on what was memorised.
 running:
 	$(PY) tools/measure_running.py dict/kk_KZ baseline/kk_KZ \
-		--kaznerd $(KAZNERD) --show-misses 10
+		--kaznerd $(KAZNERD) --split test --show-misses 10
+
+names:
+	$(PY) tools/mine_names.py --kaznerd $(KAZNERD) --kazsearch $(KAZSEARCH) \
+		-o data/names.txt
 
 scoped: tests/corpus.tsv tests/negatives.txt
 	$(PY) tools/measure.py dict/kk_KZ --against baseline/kk_KZ \

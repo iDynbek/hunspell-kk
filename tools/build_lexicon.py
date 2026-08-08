@@ -16,6 +16,10 @@ Three go in, and each entry records which:
                labels for 53,154. Much the largest, and the only one that
                reaches modern loanwords. Headwords are printed in capitals,
                which is typography rather than orthography, so they are folded.
+    kaznerd    proper names from KazNERD's entity annotations, all nominal.
+               Two fifths of what the dictionary flags in running text is a
+               name, and no lexicon of common words was ever going to hold
+               them; see tools/mine_names.py.
     baseline   the 2009 wordlist, no part of speech at all.
 
     python tools/build_lexicon.py -o data/lexicon.tsv
@@ -85,6 +89,16 @@ def from_kazdict(path: Path) -> dict[str, set[str]]:
     return out
 
 
+def from_names(path: Path) -> dict[str, set[str]]:
+    """Proper names, all nominal: they take case, plural and possessive."""
+    out = {}
+    for line in path.read_text(encoding="utf-8").splitlines():
+        word = line.strip()
+        if word and not word.startswith("#"):
+            out[word] = {NOMINAL}
+    return out
+
+
 def from_baseline(path: Path) -> dict[str, set[str]]:
     out = {}
     for line in path.read_text(encoding="utf-8-sig").splitlines()[1:]:
@@ -102,11 +116,13 @@ def main() -> int:
                     default=ROOT.parent / "apertium-kaz/apertium-kaz.kaz.lexc")
     ap.add_argument("--kazdict", type=Path,
                     default=ROOT.parent / "kazdict/data/build/kazdict.db")
+    ap.add_argument("--names", type=Path, default=ROOT / "data/names.txt")
     ap.add_argument("--baseline", type=Path, default=ROOT / "baseline/kk_KZ.dic")
     args = ap.parse_args()
 
     sources = [("apertium", args.apertium, from_apertium),
                ("kazdict", args.kazdict, from_kazdict),
+               ("kaznerd", args.names, from_names),
                ("baseline", args.baseline, from_baseline)]
 
     tracks: dict[str, set[str]] = collections.defaultdict(set)

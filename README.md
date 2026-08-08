@@ -5,16 +5,17 @@ occurs — which is what a reader actually sees:
 
 | | words accepted | flagged |
 |---|---|---|
-| 2009 release | 82.0% | 1 word in 5.5 |
-| generated | **96.6%** | 1 word in 29 |
+| 2009 release | 82.1% | 1 word in 5.5 |
+| generated | **97.5%** | 1 word in 40 |
 
-Counting each word *type* once instead, on the same text: 44.6% → **85.6%**.
+Counting each word *type* once instead, on the same text: 58.2% → **93.6%**.
 The two differ because running text is dominated by common words, and the
 type count is the harsher test. `make running` reproduces both, against
 [KazNERD](https://github.com/IS2AI/KazNERD) (CC-BY-4.0).
 
-Of the 3.4% this still flags, 40% are proper names, and another 16% are
-one- and two-letter tokens and transcription artefacts.
+Measured on KazNERD's held-out test split, because the proper names in the
+wordlist are mined from its training split; scoring on both would be scoring
+on what was memorised.
 
 Against dictionary text instead — every word type once, which is where the rest
 of this README's numbers come from:
@@ -22,7 +23,7 @@ of this README's numbers come from:
 | recall | modern Kazakh | Russian-glossing | historical |
 |---|---|---|---|
 | 2009 release | 30.1% | 16.8% | 10.4% |
-| generated | **76.7%** | 66.7% | 46.7% |
+| generated | **76.9%** | 66.7% | 46.7% |
 
 483,752 / 11,461 / 30,256 word forms from kazdict, by the scope of the edition
 each came from, plus 50,000 constructed non-words of which the 2009 release
@@ -37,7 +38,7 @@ with the affix gap 66,073 → **3,212** and the wordlist gap 80,092 → **38,766
 | | entries |
 |---|---|
 | 2009 release | 54,063 |
-| generated | 85,794 |
+| generated | 87,373 |
 
 The Kazakh dictionary every distribution ships is `kk_KZ` version
 **2009.09.01**, an OpenOffice extension by Akmaral Mussayeva, László Németh and

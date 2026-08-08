@@ -33,7 +33,7 @@ DEFAULT_KAZNERD = ROOT.parent / "KazNERD/KazNERD"
 CYRILLIC_WORD = re.compile(r"^[Ѐ-ӿ]+$")
 
 
-def tokens(directory: Path) -> collections.Counter:
+def tokens(directory: Path, split: str = "*") -> collections.Counter:
     """Every Cyrillic token in the IOB2 files, with its count.
 
     The format is one `token TAG` per line and a blank line between sentences,
@@ -42,7 +42,7 @@ def tokens(directory: Path) -> collections.Counter:
     word appearing once.
     """
     counts = collections.Counter()
-    for path in sorted(directory.glob("IOB2_*.txt")):
+    for path in sorted(directory.glob(f"IOB2_{split}.txt")):
         for line in path.read_text(encoding="utf-8").splitlines():
             word = line.split(" ")[0].strip()
             if CYRILLIC_WORD.match(word):
@@ -64,6 +64,11 @@ def main() -> int:
     ap.add_argument("dictionaries", type=Path, nargs="+",
                     help="paths without extension, e.g. dict/kk_KZ baseline/kk_KZ")
     ap.add_argument("--kaznerd", type=Path, default=DEFAULT_KAZNERD)
+    ap.add_argument("--split", default="*",
+                    help="which IOB2 files to measure: test, valid, train, or * "
+                         "for all. Anything mined from KazNERD must be mined "
+                         "from train and measured on test, or the number is a "
+                         "memory test.")
     ap.add_argument("--show-misses", type=int, default=0,
                     help="print this many of the most frequent rejected words")
     args = ap.parse_args()
@@ -71,7 +76,7 @@ def main() -> int:
     if not args.kaznerd.exists():
         sys.exit(f"no KazNERD at {args.kaznerd} — clone IS2AI/KazNERD")
 
-    counts = tokens(args.kaznerd)
+    counts = tokens(args.kaznerd, args.split)
     types = sorted(counts)
     total = sum(counts.values())
     print(f"{total:,} Cyrillic tokens, {len(types):,} distinct\n")

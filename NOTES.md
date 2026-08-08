@@ -99,8 +99,8 @@ Both, on the same million words of KazNERD news text:
 
 | | by token | by type |
 |---|---|---|
-| 2009 release | 82.0% | 44.6% |
-| this | 96.6% | 85.6% |
+| 2009 release | 82.1% | 58.2% |
+| this | 97.5% | 93.6% |
 
 The type figure is the harsher test and the token figure is the honest one for
 "what will a user see". They should probably both always be quoted, because
@@ -119,6 +119,37 @@ names with a separate list, and Hungarian and Czech both use `NOSUGGEST` and
 are both compounds in `көп-`, which is the `COMPOUND*` gap showing up in real
 text rather than in theory.
 
+## Names are their own problem
+
+Two fifths of everything flagged in running text was a proper name. No lexicon
+of common words was ever going to hold them, and no affix rule helps: names are
+a list, which is how most Hunspell dictionaries treat them.
+
+KazNERD has them already marked, so `tools/mine_names.py` takes the entity
+spans. Three details mattered more than expected.
+
+Only capitalised tokens count. Entity spans routinely swallow ordinary words —
+`Қамтамасыз ету министрлігі` puts `ету` and `министрлігі` inside an
+ORGANISATION — and taking the whole span pulls in vocabulary as if it were
+names.
+
+The ladder cannot lemmatise them. It is built for Kazakh stems and does not
+know Russian-style surnames in -ов/-ев, so `Абаевтың` reduces to `Абаевты` and
+stops. Since Kazakh suffixes are strictly suffixal, the base of a name is just
+the longest proper prefix of it that the corpus also uses as a name on its own,
+applied until nothing more comes off.
+
+And what may come off has to be a short explicit list of unmistakable case
+endings, not anything the morphology can segment. General segmentability takes
+`Қазақстан` to `Қазақ` — `-с` and `-тан` are both morphemes — and `Алматы` to
+`Алма`. Leaving an inflected name unreduced costs one redundant entry; reducing
+a real name to a fragment invents a word.
+
+**Mine from train, measure on test.** KazNERD is also the evaluation corpus, so
+taking names from the same text one is scored against turns the score into a
+memory test. On the held-out split the names are worth +0.8pp by token and
++1.8pp by type.
+
 ## Candidate targets
 
 Numbers that could serve as targets, with what is known about each.
@@ -130,11 +161,11 @@ possible result; nothing establishes it is achievable. This number is also the
 one most likely to matter to a user, since a false accept is a silent failure
 where a false reject is a visible one.
 
-**Token coverage on running text, currently 96.6%.** Nearest thing to a
-user-facing number. The 2009 release is at 82.0%. Two fifths of the remainder
+**Token coverage on running text, currently 97.5%.** Nearest thing to a
+user-facing number. The 2009 release is at 82.1%. Two fifths of the remainder
 is proper names, so the reachable part is smaller than 3.4% suggests.
 
-**Modern-scope recall, currently 76.7%.** The affix gap is 3,212 forms against
+**Modern-scope recall, currently 76.9%.** The affix gap is 3,212 forms against
 a wordlist gap of 38,766, so this is now almost entirely a vocabulary question.
 Unclear what ceiling is meaningful: the residual reduces to 36,918 distinct
 stems at 1.22 forms per stem, so there is no small set of additions that moves
