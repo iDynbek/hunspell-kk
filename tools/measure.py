@@ -17,6 +17,7 @@ KAZSEARCH_SRC, default ../kazsearch-py).
 from __future__ import annotations
 
 import argparse
+import collections
 import os
 import re
 import shutil
@@ -53,6 +54,21 @@ def extract_corpus(source: Path) -> list[str]:
         if CYRILLIC_WORD.match(w):
             words.append(w)
     return words
+
+
+def load_scoped(path: Path) -> dict[str, list[str]]:
+    """A corpus split by the kind of source its tokens came from.
+
+    Averaging Chagatai poetry with the Academy dictionary produces a number no
+    decision can be made from: the first *should* be rejected. Reporting them
+    apart is what makes the headline mean "modern Kazakh".
+    """
+    scoped = collections.defaultdict(list)
+    for line in path.read_text(encoding="utf-8").splitlines():
+        if line and not line.startswith("#"):
+            token, _, scope = line.partition("\t")
+            scoped[scope or "modern"].append(token)
+    return dict(scoped)
 
 
 def load_corpus(args: argparse.Namespace) -> list[str]:
@@ -152,6 +168,8 @@ def main() -> int:
     ap.add_argument("--negatives", type=Path, default=NEGATIVES,
                     help="non-words the dictionary must reject (tools/negatives.py)")
     ap.add_argument("--misses", type=Path, help="directory to dump rejections into")
+    ap.add_argument("--scoped", action="store_true",
+                    help="corpus is a token/scope TSV from tools/build_corpus.py")
     args = ap.parse_args()
 
     if not shutil.which("hunspell"):
@@ -161,6 +179,25 @@ def main() -> int:
         from kazsearch.ladder import ladder
     except ImportError:
         sys.exit(f"no kazsearch under {args.kazsearch} — pass --kazsearch")
+
+    if args.corpus and args.corpus.suffix == ".tsv" and args.scoped:
+        scoped = load_scoped(args.corpus)
+        for base in filter(None, [args.dictionary, args.against]):
+            print(f"{base}")
+            for scope in ("modern", "glossing", "historical"):
+                if scope not in scoped:
+                    continue
+                probe = scoped[scope]
+                misses = spellcheck(base, probe)
+                print(f"  {scope:<11} {len(probe):>8,} forms   "
+                      f"recall {(1 - len(misses)/len(probe))*100:5.1f}%")
+            if negatives := (args.negatives.read_text(encoding="utf-8").split()
+                             if args.negatives and args.negatives.exists() else []):
+                bad = false_accepts(base, negatives)
+                print(f"  {'false accepts':<11} {bad:>8,}   {bad/len(negatives)*100:5.1f}%"
+                      f" of {len(negatives):,} non-words")
+            print()
+        return 0
 
     words = load_corpus(args)
 

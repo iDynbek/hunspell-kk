@@ -1,12 +1,24 @@
 # Kazakh dictionary for Hunspell
 
-|  | entries | recall | affix gap | wordlist gap | false accepts |
-|---|---|---|---|---|---|
-| 2009 release | 54,063 | 35.8% | 66,073 | 80,092 | 2.1% |
-| generated | 86,976 | **78.8%** | **3,190** | **45,100** | 6.1% |
+| recall | modern Kazakh | Russian-glossing | historical |
+|---|---|---|---|
+| 2009 release | 30.1% | 16.8% | 10.4% |
+| generated | **76.7%** | 66.7% | 46.7% |
 
-Against 227,637 Kazakh word forms and 50,000 known non-words, hunspell 1.7.3.
-`make measure` reproduces it.
+483,752 / 11,461 / 30,256 word forms from kazdict, by the scope of the edition
+each came from, plus 50,000 constructed non-words of which the 2009 release
+accepts 2.1% and this one 6.8%. hunspell 1.7.3. `make scoped` reproduces it.
+
+The three columns are reported apart because the sources are not all about the
+same language, and a spellchecker for modern Kazakh *should* reject much of the
+third; see [What is measured](#what-is-measured). Against the older blended
+227,637-form corpus, for continuity with earlier revisions: 35.8% → **81.6%**,
+with the affix gap 66,073 → **3,212** and the wordlist gap 80,092 → **38,766**.
+
+| | entries |
+|---|---|
+| 2009 release | 54,063 |
+| generated | 85,794 |
 
 The Kazakh dictionary every distribution ships is `kk_KZ` version
 **2009.09.01**, an OpenOffice extension by Akmaral Mussayeva, László Németh and
@@ -141,6 +153,21 @@ word that is both, like `бала`, cannot say which track a suffix belongs to, 
 counting it for both would put every verbal ending back on the nominal side.
 Such words still inflect both ways; they just do not get a vote.
 
+### Suffixes the layer model does not list
+
+`құла`, `тие` and `бұрқыра` are all in the wordlist, but `құлап`, `тиеп` and
+`бұрқырап` were rejected. The model has `-ып` and `-іп` and not the `-п` they
+become after a vowel, so the ladder stopped one rung short — and since the same
+ladder decides whether a rejection is an affix gap or a wordlist gap, 6,266
+forms were being filed in the wrong column. The blind spot hid itself.
+
+Five are added here rather than in kazsearch, which has its own parity tests
+against a Rust reference: `-п` converb, `-л` passive, `-с` reciprocal, `-т`
+causative, `-р` aorist participle. Stripping one is only allowed where it
+leaves a vowel-final stem, which is the condition under which those forms exist
+at all. `-д` was not added — the forms suggesting it were place names in
+`-абад`.
+
 ### Sound changes
 
 A stem-final voiceless stop voices before a vowel: `кітап` is `кітабы`, `бақ`
@@ -150,8 +177,11 @@ so the file generated `*кітапы` and got the real form only from a padded
 headword. The rules now strip: take `п` off, put `бы` on, and keep the plain
 rule for the same suffix off those three letters.
 
-Vowel elision, `орын` → `орны`, is not handled. It is 77 forms, and it takes a
-vowel out of the middle rather than replacing the last letter.
+A stem can also drop its last vowel: `орын` is `орны`, `мойын` is `мойны`.
+That is a strip too — take `ын` off, put `нын` on — but it cannot be applied by
+shape, because `қатын` keeps its vowel and the rule would give `*қатнын`. Which
+stems elide is lexical, so `data/elide.txt` lists the ones observed doing it
+and only those carry the flag.
 
 ### Chains nobody wrote down
 
@@ -188,6 +218,22 @@ morpheme, in the matching harmony, and only where the group has not already
 been shown to take a different shape of the same morpheme — so it can add
 what the corpus was silent about without overruling what the corpus said.
 
+## What is measured
+
+The corpus is dictionary text, and the dictionaries are not all about the same
+language. `Ясауи Хикметтерінің тілі` is 12th-century Chagatai religious poetry
+— `бәндәларга`, `кечмәйін`, `йолыгә` — and a Kazakh spellchecker *should*
+reject most of it. The 1966 etymological dictionary explains itself in Russian:
+`вотянкого`, `обзор`, `лексики`. Averaging those with the Academy dictionary
+gives a number no decision can be made from.
+
+`tools/build_corpus.py` therefore builds the corpus from kazdict directly, with
+each token carrying the scope of the edition it came from — and charged to the
+narrowest one, so a word the Academy dictionary also uses counts as modern
+wherever else it appears. Tokens come from sense text rather than headwords,
+because that is where running Kazakh is; kazdict normalises headwords hard and
+definitions barely at all.
+
 ## Layout
 
 | | |
@@ -198,10 +244,12 @@ what the corpus was silent about without overruling what the corpus said.
 | `data/residues.tsv` | the suffix strings Kazakh text puts on a stem, by stem class |
 | `data/chains.tsv` | KazNLP's unfolded suffix inventory, with its analyses |
 | `data/prune.txt` | headwords the affix file makes unnecessary |
+| `data/elide.txt` | stems that drop their last vowel |
 | `tools/kkphon.py` | harmony, final segment and track — what picks a suffix's shape |
 | `tools/build_lexicon.py` | the three sources → `data/lexicon.tsv` |
 | `tools/mine_residues.py` | corpus → `data/residues.tsv` |
 | `tools/import_chains.py` | KazNLP's `sfx` table → `data/chains.tsv` |
+| `tools/build_corpus.py` | kazdict → a corpus with each token's source scope |
 | `tools/gen_aff.py` | `data/residues.tsv` → a two-level `.aff` |
 | `tools/prune.py` | → `data/prune.txt`, by asking Hunspell what it can regenerate |
 | `tools/gen_dic.py` | the wordlist, with each entry's class on it |

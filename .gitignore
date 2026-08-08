@@ -3,6 +3,7 @@ __pycache__/
 
 # generated from kazsearch-py, see README
 tests/corpus_cyr.txt
+tests/corpus.tsv
 tests/negatives.txt
 
 # measure.py --misses dumps

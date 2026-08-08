@@ -28,7 +28,8 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 
-from kkphon import TRACKS, stem_class  # noqa: E402
+from kkphon import (EXTRA_MORPHEMES, TRACKS, VOWELS, stem_class,  # noqa: E402
+                    takes_bare_suffix)
 
 ROOT = Path(__file__).resolve().parent.parent
 DEFAULT_KAZSEARCH = Path(os.environ.get("KAZSEARCH_SRC", ROOT.parent / "kazsearch-py"))
@@ -51,6 +52,29 @@ def single_track(lexicon: Path) -> dict[str, str]:
 # `кітабы`, `бақ` is `бағы`, `жүрек` is `жүрегі`. 2,824 corpus forms do this.
 VOICING = {"қ": "ғ", "к": "г", "п": "б"}
 
+# Only the high vowels elide, and only in the last syllable of a stem.
+ELIDING_VOWELS = frozenset("ыіұү")
+
+
+def candidate_stems(word: str, ladder) -> list[str]:
+    """Every stem the word might rest on, the ladder's answers plus one more.
+
+    The layer model has `-ып` but not the `-п` it becomes after a vowel, so the
+    ladder stops one rung short on `құлап`, `ізде+п`, `оқы+т`. Stripping a bare
+    suffix is only allowed where it leaves a vowel-final stem, which is the
+    condition under which those forms exist at all, and the caller still has to
+    find the result in the lexicon — so a wrong strip goes nowhere.
+    """
+    rungs = ladder(word, max_rungs=UNCAPPED)
+    extra = []
+    for rung in rungs:
+        if len(rung) > 2 and rung[-1] in EXTRA_MORPHEMES:
+            shorter = rung[:-1]
+            if takes_bare_suffix(shorter):
+                extra.append(shorter)
+                extra.extend(ladder(shorter, max_rungs=UNCAPPED))
+    return rungs + extra
+
 
 def alternation(stem: str, form: str) -> tuple[str, str | None]:
     """What the suffix is, and what it costs the stem to take it.
@@ -60,15 +84,31 @@ def alternation(stem: str, form: str) -> tuple[str, str | None]:
     never `кітабы`. Returning the strip separately lets the rule be written as
     Hunspell wants it — take `п` off, put `бы` on.
 
-    Vowel elision (`орын` → `орны`) is not handled; it is 77 forms, and it
-    removes a vowel from the middle rather than replacing the last letter.
+    A stem can also drop its last vowel: `орын` is `орны`, `мойын` is `мойны`.
+    That is written as a strip too — take `ын` off `мойын`, put `нын` on — but
+    it cannot be applied by shape, because `қатын` keeps its vowel and the rule
+    would make it `*қатнын`. Which stems elide is lexical, so they are collected
+    and flagged individually.
     """
     if form.startswith(stem):
         return "", form[len(stem):]
     voiced = VOICING.get(stem[-1:])
     if voiced and form.startswith(stem[:-1] + voiced):
         return stem[-1], form[len(stem):]
+    elided = elision(stem, form)
+    if elided:
+        return elided
     return "", None
+
+
+def elision(stem: str, form: str) -> tuple[str, str] | None:
+    """`мойын` + `ын` → `мойнын`: drop the stem's last vowel, keep what follows."""
+    if len(stem) < 3 or stem[-1] in VOWELS or stem[-2] not in ELIDING_VOWELS:
+        return None
+    shortened = stem[:-2] + stem[-1]
+    if not form.startswith(shortened) or len(form) <= len(shortened):
+        return None
+    return stem[-2:], stem[-1] + form[len(shortened):]
 
 
 def mine(corpus: list[str], tracks: dict[str, str], ladder) -> collections.Counter:
@@ -86,11 +126,11 @@ def mine(corpus: list[str], tracks: dict[str, str], ladder) -> collections.Count
     the split the tracks exist for. Such words still inflect both ways; they
     just do not get a vote on what either track contains.
     """
-    counts = collections.Counter()
+    counts, elides = collections.Counter(), set()
     for word in corpus:
         low = word.lower()
         stem = None
-        for rung in ladder(low, max_rungs=UNCAPPED):
+        for rung in candidate_stems(low, ladder):
             if rung in tracks and (stem is None or len(rung) < len(stem)):
                 stem = rung
         if stem is None or stem == low:
@@ -98,8 +138,10 @@ def mine(corpus: list[str], tracks: dict[str, str], ladder) -> collections.Count
         strip, residue = alternation(stem, low)
         if residue is None:
             continue
+        if len(strip) > 1:
+            elides.add(stem)
         counts[tracks[stem] + stem_class(stem), strip, residue] += 1
-    return counts
+    return counts, elides
 
 
 def main() -> int:
@@ -108,6 +150,7 @@ def main() -> int:
     ap.add_argument("-o", "--output", type=Path, default=ROOT / "data/residues.tsv")
     ap.add_argument("--corpus", type=Path, default=ROOT / "tests/corpus_cyr.txt")
     ap.add_argument("--lexicon", type=Path, default=ROOT / "data/lexicon.tsv")
+    ap.add_argument("--elide", type=Path, default=ROOT / "data/elide.txt")
     ap.add_argument("--kazsearch", type=Path, default=DEFAULT_KAZSEARCH)
     ap.add_argument("--min-count", type=int, default=2,
                     help="drop residues seen once; at that frequency a stemmer "
@@ -122,8 +165,12 @@ def main() -> int:
     except ImportError:
         sys.exit(f"no kazsearch under {args.kazsearch} — pass --kazsearch")
 
-    counts = mine(args.corpus.read_text(encoding="utf-8").split(),
-                  single_track(args.lexicon), ladder)
+    counts, elides = mine(args.corpus.read_text(encoding="utf-8").split(),
+                          single_track(args.lexicon), ladder)
+    args.elide.write_text("# stems that drop their last vowel, from "
+                          "tools/mine_residues.py\n" + "\n".join(sorted(elides))
+                          + "\n", encoding="utf-8")
+    print(f"{len(elides):,} eliding stems → {args.elide}", file=sys.stderr)
 
     rows = sorted(((n, c, s, r) for (c, s, r), n in counts.items()
                    if n >= args.min_count),

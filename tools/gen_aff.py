@@ -30,7 +30,7 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 
-from kkphon import CLASSES  # noqa: E402
+from kkphon import CLASSES, EXTRA_MORPHEMES  # noqa: E402
 
 ROOT = Path(__file__).resolve().parent.parent
 DEFAULT_KAZSEARCH = Path(os.environ.get("KAZSEARCH_SRC", ROOT.parent / "kazsearch-py"))
@@ -42,6 +42,7 @@ RULE_TABLES = ("PRED_RULES", "CASE_RULES", "POSS_RULES", "PLUR_RULES", "DERIV_RU
 # flags run out at about 64 — the wall the 2009 file was already against, with
 # 51 of them used.
 CLASS_FLAG = {cls: 10 + i for i, cls in enumerate(CLASSES)}
+ELIDE_FLAG = 90
 CONT_FLAG_BASE = 100
 
 HEADER = """\
@@ -103,7 +104,8 @@ def morphemes(kazsearch: Path) -> set[str]:
         from kazsearch import rules
     except ImportError:
         sys.exit(f"no kazsearch under {kazsearch} — pass --kazsearch")
-    return {r.suffix for table in RULE_TABLES for r in getattr(rules, table)}
+    return ({r.suffix for table in RULE_TABLES for r in getattr(rules, table)}
+            | set(EXTRA_MORPHEMES))
 
 
 def read_residues(path: Path) -> list[tuple[str, str, str, int]]:
@@ -223,7 +225,7 @@ MAX_COMPOSED = 2
 # A transition seen once is as likely to be a stemmer misanalysis as a real
 # adjacency, and one bad transition multiplies through every walk that touches
 # it.
-MIN_BIGRAM = 2
+MIN_BIGRAM = 3
 
 
 def harmony_of(morpheme: str) -> str | None:
@@ -381,8 +383,14 @@ def build(rows, inventory, chains):
         cut = split_first(residue, inventory)
         return cut[0] if cut else residue
 
-    split_rows, unsplit = [], []
+    split_rows, unsplit, elisions = [], [], set()
     for cls, strip, residue, count in rows:
+        # A multi-character strip is the stem dropping its last vowel. It goes
+        # on its own flag, carried only by the stems observed to do it, because
+        # the shape cannot tell `мойын` from `қатын`.
+        if len(strip) > 1:
+            elisions.add((strip, residue))
+            continue
         cut = split_first(residue, inventory)
         if cut is None:
             unsplit.append((cls, residue))
@@ -421,10 +429,10 @@ def build(rows, inventory, chains):
             level2[key].add(tail)
     grafted = graft(level2, level1, chains, inventory)
     composed = compose(level2, inventory)
-    return level1, level2, unsplit, rejected, composed, grafted
+    return level1, level2, elisions, unsplit, rejected, composed, grafted
 
 
-def render(level1, level2) -> str:
+def render(level1, level2, elisions) -> str:
     cont_flag = {key: CONT_FLAG_BASE + i for i, key in enumerate(sorted(level2))}
     out = [HEADER]
 
@@ -445,6 +453,13 @@ def render(level1, level2) -> str:
             # `кітап` twice and yields `*кітапы` alongside `кітабы`.
             condition = UNVOICED if not strip and s1 in voicing else "."
             out.append(f"SFX {flag} {strip or 0} {append} {condition}")
+
+    if elisions:
+        out.append("\n# Stems that drop their last vowel before a suffix: `мойын`\n"
+                   "# is `мойны`. Only the entries seen to do it carry this flag.")
+        out.append(f"\nSFX {ELIDE_FLAG} N {len(elisions)}")
+        for strip, append in sorted(elisions):
+            out.append(f"SFX {ELIDE_FLAG} {strip} {append} .")
 
     out.append("\n# Level two: the rest of the chain, one string per rule.")
     for key in sorted(level2):
@@ -467,9 +482,9 @@ def main() -> int:
     args = ap.parse_args()
 
     rows = read_residues(args.residues)
-    level1, level2, unsplit, rejected, composed, grafted = build(
+    level1, level2, elisions, unsplit, rejected, composed, grafted = build(
         rows, morphemes(args.kazsearch), read_chains(args.chains))
-    text = render(level1, level2)
+    text = render(level1, level2, elisions)
 
     n1 = sum(len(v) for v in level1.values())
     n2 = sum(len(v) for v in level2.values())
@@ -477,6 +492,7 @@ def main() -> int:
           f"{len(level2):,} continuation groups", file=sys.stderr)
     print(f"{rejected:,} residues dropped as a minority allomorph, "
           f"{len(unsplit):,} with no morpheme boundary", file=sys.stderr)
+    print(f"{len(elisions):,} elision rules", file=sys.stderr)
     print(f"{grafted:,} level-two rules from KazNLP chains, "
           f"{composed:,} composed from attested morpheme pairs", file=sys.stderr)
 

@@ -103,3 +103,23 @@ NOMINAL, VERBAL = "n", "v"
 TRACKS = (NOMINAL, VERBAL)
 
 CLASSES = tuple(track + phon for track in TRACKS for phon in PHON_CLASSES)
+
+# Suffixes the kazsearch layer model does not list, all of them the bare form a
+# morpheme takes after a vowel: `-ып` is `-п` on `ізде`, `-ыл` is `-л` on
+# `жаса`. Their absence is invisible in stemming — the ladder simply stops one
+# rung early — but it cost 4,800 corpus forms here, and worse, it cost them
+# silently: the same ladder decides whether a rejection is filed as an affix
+# gap or a wordlist gap, so its blind spots land in the wrong column.
+#
+#   -п  converb            ізде+п     -л  passive      жаса+л
+#   -р  aorist participle  айтыла+р   -с  reciprocal   сөйле+с
+#   -т  causative          оқы+т
+#
+# `-д` is deliberately absent: the forms suggesting it were place names in
+# -абад, not a suffix.
+EXTRA_MORPHEMES = frozenset("прстл")
+
+
+def takes_bare_suffix(stem: str) -> bool:
+    """Whether a stem can carry one of those, i.e. whether it ends in a vowel."""
+    return bool(stem) and stem[-1] in VOWELS

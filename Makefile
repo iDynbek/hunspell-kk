@@ -4,14 +4,15 @@ APERTIUM  ?= ../apertium-kaz/apertium-kaz.kaz.lexc
 KAZDICT   ?= ../kazdict/data/build/kazdict.db
 KAZNLP    ?= ../kaznlp/kaznlp/morphology/mdl/sfx
 
-.PHONY: help dict aff dic check data lexicon chains residues prune negatives baseline measure clean
+.PHONY: help dict aff dic check data lexicon chains corpus residues prune negatives baseline measure scoped clean
 
 help:
 	@echo "make dict      generate dict/kk_KZ.aff and dict/kk_KZ.dic"
 	@echo "make check     fail if dict/kk_KZ.aff is stale"
 	@echo "make measure   measure dict/ against the 2009 release"
 	@echo "make baseline  measure the 2009 release on its own"
-	@echo "make data      rebuild everything under data/ (needs a corpus and the sources)"
+	@echo "make scoped    measure per source scope: modern, glossing, historical"
+	@echo "make data      rebuild everything under data/ (needs the sources)"
 
 # Building the dictionary needs only this repository: everything corpus-derived
 # is committed under data/.
@@ -47,6 +48,11 @@ chains:
 tests/corpus_cyr.txt:
 	$(PY) tools/measure.py baseline/kk_KZ --kazsearch $(KAZSEARCH) >/dev/null
 
+# Tokens with the scope of the edition they came from, so a headline number can
+# mean "modern Kazakh" rather than an average over Chagatai poetry.
+corpus tests/corpus.tsv:
+	$(PY) tools/build_corpus.py --kazdict $(KAZDICT) -o tests/corpus.tsv
+
 residues: tests/corpus_cyr.txt
 	$(PY) tools/mine_residues.py --kazsearch $(KAZSEARCH) -o data/residues.tsv
 
@@ -59,8 +65,12 @@ negatives tests/negatives.txt: tests/corpus_cyr.txt
 baseline: tests/negatives.txt
 	$(PY) tools/measure.py baseline/kk_KZ --kazsearch $(KAZSEARCH)
 
+scoped: tests/corpus.tsv tests/negatives.txt
+	$(PY) tools/measure.py dict/kk_KZ --against baseline/kk_KZ \
+		--corpus tests/corpus.tsv --scoped
+
 measure: tests/negatives.txt
 	$(PY) tools/measure.py dict/kk_KZ --against baseline/kk_KZ --kazsearch $(KAZSEARCH)
 
 clean:
-	rm -rf tests/corpus_cyr.txt tests/negatives.txt __pycache__ tools/__pycache__
+	rm -rf tests/corpus_cyr.txt tests/corpus.tsv tests/negatives.txt __pycache__ tools/__pycache__

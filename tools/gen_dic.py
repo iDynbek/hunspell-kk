@@ -25,7 +25,7 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 
-from gen_aff import CLASS_FLAG  # noqa: E402
+from gen_aff import CLASS_FLAG, ELIDE_FLAG  # noqa: E402
 from kkphon import TRACKS, stem_class  # noqa: E402
 
 ROOT = Path(__file__).resolve().parent.parent
@@ -51,9 +51,23 @@ def read_pruned(path: Path) -> set[str]:
             if line.strip() and not line.startswith("#")}
 
 
+def read_elide(path: Path) -> set[str]:
+    """Stems observed to drop their last vowel; see tools/mine_residues.py."""
+    if not path.exists():
+        return set()
+    return {line.strip() for line in path.read_text(encoding="utf-8").splitlines()
+            if line.strip() and not line.startswith("#")}
+
+
+ELIDES: set[str] = set()
+
+
 def entry(word: str, tracks: str = "nv") -> str:
     phon = stem_class(word.lower())
-    return f"{word}/{','.join(str(CLASS_FLAG[t + phon]) for t in tracks)}"
+    flags = [str(CLASS_FLAG[t + phon]) for t in tracks]
+    if word.lower() in ELIDES:
+        flags.append(str(ELIDE_FLAG))
+    return f"{word}/{','.join(flags)}"
 
 
 def main() -> int:
@@ -61,10 +75,12 @@ def main() -> int:
                                  formatter_class=argparse.RawDescriptionHelpFormatter)
     ap.add_argument("-o", "--output", type=Path, default=ROOT / "dict/kk_KZ.dic")
     ap.add_argument("--lexicon", type=Path, default=ROOT / "data/lexicon.tsv")
+    ap.add_argument("--elide", type=Path, default=ROOT / "data/elide.txt")
     ap.add_argument("--pruned", type=Path, default=ROOT / "data/prune.txt",
                     help="headwords to drop; see tools/prune.py")
     args = ap.parse_args()
 
+    ELIDES.update(read_elide(args.elide))
     lexicon = read_lexicon(args.lexicon)
 
     gone = {w.lower() for w in read_pruned(args.pruned)}
