@@ -91,5 +91,15 @@ def stem_class(word: str) -> str:
     return harmony(word) + final_class(word)
 
 
-CLASSES = tuple(h + f for h in (HARM_BACK, HARM_FRONT)
-                for f in (FINAL_V, FINAL_R, FINAL_Z, FINAL_N, FINAL_T))
+PHON_CLASSES = tuple(h + f for h in (HARM_BACK, HARM_FRONT)
+                     for f in (FINAL_V, FINAL_R, FINAL_Z, FINAL_N, FINAL_T))
+
+# Nouns, adjectives, adverbs, numerals and proper names all take the same case,
+# plural and possessive endings, so one nominal track covers them; verbs need
+# their own. Without the split nothing distinguishes `адам` from `қон`, and
+# `-дың` — genitive on one, second-person past on the other — has to be allowed
+# after both.
+NOMINAL, VERBAL = "n", "v"
+TRACKS = (NOMINAL, VERBAL)
+
+CLASSES = tuple(track + phon for track in TRACKS for phon in PHON_CLASSES)

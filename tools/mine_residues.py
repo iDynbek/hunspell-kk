@@ -28,7 +28,7 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 
-from kkphon import stem_class  # noqa: E402
+from kkphon import TRACKS, stem_class  # noqa: E402
 
 ROOT = Path(__file__).resolve().parent.parent
 DEFAULT_KAZSEARCH = Path(os.environ.get("KAZSEARCH_SRC", ROOT.parent / "kazsearch-py"))
@@ -36,13 +36,18 @@ DEFAULT_KAZSEARCH = Path(os.environ.get("KAZSEARCH_SRC", ROOT.parent / "kazsearc
 UNCAPPED = 1024
 
 
-def headwords(dic: Path) -> set[str]:
-    return {line.split("/")[0].strip().lower()
-            for line in dic.read_text(encoding="utf-8-sig").splitlines()[1:]
-            if line.strip()}
+def single_track(lexicon: Path) -> dict[str, str]:
+    """Words with exactly one part of speech, mapped to its track."""
+    out = {}
+    for line in lexicon.read_text(encoding="utf-8").splitlines():
+        if line and not line.startswith("#"):
+            word, tracks, _sources = line.split("\t")
+            if len(tracks) == 1 and tracks in TRACKS:
+                out[word] = tracks
+    return out
 
 
-def mine(corpus: list[str], heads: set[str], ladder) -> collections.Counter:
+def mine(corpus: list[str], tracks: dict[str, str], ladder) -> collections.Counter:
     """(stem class, residue) → how many corpus forms it explains.
 
     The *shortest* headword on the ladder wins, so a form is charged to the
@@ -50,17 +55,23 @@ def mine(corpus: list[str], heads: set[str], ladder) -> collections.Counter:
     headword instead would credit `мектептер` to `мектептер` whenever that had
     been entered as a headword in its own right, and the 2009 wordlist is full
     of those — which is precisely the padding this is meant to see past.
+
+    Only stems with one part of speech contribute. A word that is both noun and
+    verb cannot say which of its two tracks a suffix belongs to, and counting it
+    for both would put every verbal ending back on the nominal track — undoing
+    the split the tracks exist for. Such words still inflect both ways; they
+    just do not get a vote on what either track contains.
     """
     counts = collections.Counter()
     for word in corpus:
         low = word.lower()
         stem = None
         for rung in ladder(low, max_rungs=UNCAPPED):
-            if rung in heads and (stem is None or len(rung) < len(stem)):
+            if rung in tracks and (stem is None or len(rung) < len(stem)):
                 stem = rung
         if stem is None or stem == low:
             continue
-        counts[stem_class(stem), low[len(stem):]] += 1
+        counts[tracks[stem] + stem_class(stem), low[len(stem):]] += 1
     return counts
 
 
@@ -69,7 +80,7 @@ def main() -> int:
                                  formatter_class=argparse.RawDescriptionHelpFormatter)
     ap.add_argument("-o", "--output", type=Path, default=ROOT / "data/residues.tsv")
     ap.add_argument("--corpus", type=Path, default=ROOT / "tests/corpus_cyr.txt")
-    ap.add_argument("--dic", type=Path, default=ROOT / "baseline/kk_KZ.dic")
+    ap.add_argument("--lexicon", type=Path, default=ROOT / "data/lexicon.tsv")
     ap.add_argument("--kazsearch", type=Path, default=DEFAULT_KAZSEARCH)
     ap.add_argument("--min-count", type=int, default=2,
                     help="drop residues seen once; at that frequency a stemmer "
@@ -85,7 +96,7 @@ def main() -> int:
         sys.exit(f"no kazsearch under {args.kazsearch} — pass --kazsearch")
 
     counts = mine(args.corpus.read_text(encoding="utf-8").split(),
-                  headwords(args.dic), ladder)
+                  single_track(args.lexicon), ladder)
 
     rows = sorted(((n, c, r) for (c, r), n in counts.items() if n >= args.min_count),
                   key=lambda row: (-row[0], row[1], row[2]))

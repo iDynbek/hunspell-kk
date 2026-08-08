@@ -38,8 +38,9 @@ DEFAULT_KAZSEARCH = Path(os.environ.get("KAZSEARCH_SRC", ROOT.parent / "kazsearc
 RULE_TABLES = ("PRED_RULES", "CASE_RULES", "POSS_RULES", "PLUR_RULES", "DERIV_RULES",
                "VPERSON_RULES", "VTENSE_RULES", "VNEG_RULES", "VVOICE_RULES")
 
-# Flags are numeric because there are ~190 of them and single-character flags
-# run out at about 64 — the wall the 2009 file was already against, with 51 used.
+# Flags are numeric because there are several hundred and single-character
+# flags run out at about 64 — the wall the 2009 file was already against, with
+# 51 of them used.
 CLASS_FLAG = {cls: 10 + i for i, cls in enumerate(CLASSES)}
 CONT_FLAG_BASE = 100
 
@@ -194,14 +195,18 @@ def winners(weight: collections.Counter, shape_of) -> set:
 
 
 def build(rows, inventory):
-    """(class → its level-one rules, continuation group → its level-two rules).
+    """(class → its level-one rules, continuation group → its level-two rules)."""
+    def cont_key(cls: str, s1: str) -> tuple[str, str, str]:
+        """What a level-two group is keyed on: track, harmony, opening morpheme.
 
-    A continuation group is keyed by the stem's harmony and the morpheme that
-    opened the chain, not by the class as a whole. Harmony has to stay in the
-    key because the tail agrees with the stem, not with the morpheme in front
-    of it; the morpheme has to stay in because what may follow `-лар` is not
-    what may follow `-да`, even where both end in the same sound.
-    """
+        Harmony has to stay in the key because the tail agrees with the stem,
+        not with the morpheme in front of it. The track has to stay because a
+        noun and a verb take different things after the same-looking suffix.
+        And the morpheme itself has to stay because what may follow `-лар` is
+        not what may follow `-да`, even where both end in the same sound.
+        """
+        return cls[0], cls[1], s1
+
     def opening_morpheme(residue: str) -> str:
         cut = split_first(residue, inventory)
         return cut[0] if cut else residue
@@ -225,7 +230,7 @@ def build(rows, inventory):
     following = collections.Counter()
     for cls, s1, tail, count in split_rows:
         if tail and (cls, s1) in keep_opening:
-            following[(cls[0], s1), tail] += count
+            following[cont_key(cls, s1), tail] += count
     keep_tail = winners(following, lambda tail: sibling_key(opening_morpheme(tail)))
 
     level1 = collections.defaultdict(dict)   # class -> {s1: continuation key or None}
@@ -236,7 +241,7 @@ def build(rows, inventory):
         if (cls, s1) not in keep_opening:
             rejected += 1
             continue
-        key = (cls[0], s1)
+        key = cont_key(cls, s1)
         level1[cls].setdefault(s1, None)
         if tail:
             if (key, tail) not in keep_tail:

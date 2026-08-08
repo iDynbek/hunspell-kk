@@ -36,7 +36,7 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 
-from gen_dic import entry, read_wordlist  # noqa: E402
+from gen_dic import entry, read_lexicon  # noqa: E402
 
 ROOT = Path(__file__).resolve().parent.parent
 DEFAULT_KAZSEARCH = Path(os.environ.get("KAZSEARCH_SRC", ROOT.parent / "kazsearch-py"))
@@ -44,13 +44,14 @@ DEFAULT_KAZSEARCH = Path(os.environ.get("KAZSEARCH_SRC", ROOT.parent / "kazsearc
 UNCAPPED = 1024
 
 
-def spell(aff: Path, words: list[str], probe: list[str]) -> set[str]:
+def spell(aff: Path, words: dict[str, str], probe: list[str]) -> set[str]:
     """Which of `probe` a dictionary of exactly `words` rejects."""
     with tempfile.TemporaryDirectory() as tmp:
         base = Path(tmp) / "trial"
         base.with_suffix(".aff").write_bytes(aff.read_bytes())
         base.with_suffix(".dic").write_text(
-            f"{len(words)}\n" + "\n".join(sorted(entry(w) for w in words)) + "\n",
+            f"{len(words)}\n"
+            + "\n".join(sorted(entry(w, t) for w, t in words.items())) + "\n",
             encoding="utf-8")
         proc = subprocess.run(["hunspell", "-d", str(base), "-l"],
                               input="\n".join(probe), capture_output=True, text=True)
@@ -63,7 +64,7 @@ def main() -> int:
     ap = argparse.ArgumentParser(description=__doc__,
                                  formatter_class=argparse.RawDescriptionHelpFormatter)
     ap.add_argument("-o", "--output", type=Path, default=ROOT / "data/prune.txt")
-    ap.add_argument("--source", type=Path, default=ROOT / "baseline/kk_KZ.dic")
+    ap.add_argument("--lexicon", type=Path, default=ROOT / "data/lexicon.tsv")
     ap.add_argument("--aff", type=Path, default=ROOT / "dict/kk_KZ.aff")
     ap.add_argument("--corpus", type=Path, default=ROOT / "tests/corpus_cyr.txt")
     ap.add_argument("--kazsearch", type=Path, default=DEFAULT_KAZSEARCH)
@@ -77,24 +78,23 @@ def main() -> int:
     except ImportError:
         sys.exit(f"no kazsearch under {args.kazsearch} — pass --kazsearch")
 
-    words = read_wordlist(args.source)
-    lowered = {w.lower() for w in words}
+    words = read_lexicon(args.lexicon)
     candidates = {w for w in words
-                  if any(rung in lowered and rung != w.lower()
-                         for rung in ladder(w.lower(), max_rungs=UNCAPPED))}
+                  if any(rung in words and rung != w
+                         for rung in ladder(w, max_rungs=UNCAPPED))}
 
-    keep = [w for w in words if w not in candidates]
+    keep = {w: t for w, t in words.items() if w not in candidates}
     redundant = candidates - spell(args.aff, keep, sorted(candidates))
     print(f"{len(candidates):,} candidates, {len(redundant):,} regenerable",
           file=sys.stderr)
 
     corpus = args.corpus.read_text(encoding="utf-8").split()
-    lost = (spell(args.aff, [w for w in words if w not in redundant], corpus)
+    lost = (spell(args.aff, {w: t for w, t in words.items() if w not in redundant},
+                  corpus)
             - spell(args.aff, words, corpus))
-    by_form = {w.lower(): w for w in redundant}
-    load_bearing = {by_form[rung] for form in lost
+    load_bearing = {rung for form in lost
                     for rung in ladder(form.lower(), max_rungs=UNCAPPED)
-                    if rung in by_form}
+                    if rung in redundant}
     print(f"{len(lost):,} forms would be lost; {len(load_bearing):,} entries stay",
           file=sys.stderr)
 

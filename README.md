@@ -1,17 +1,12 @@
 # Kazakh dictionary for Hunspell
 
-|  | recall | affix gap | wordlist gap | false accepts |
-|---|---|---|---|---|
-| 2009 release | 35.8% | 66,073 | 80,092 | 2.1% |
-| generated | **62.0%** | **5,585** | 80,941 | 5.7% |
+|  | entries | recall | affix gap | wordlist gap | false accepts |
+|---|---|---|---|---|---|
+| 2009 release | 54,063 | 35.8% | 66,073 | 80,092 | 2.1% |
+| generated | 91,336 | **76.2%** | **5,472** | **48,810** | 5.7% |
 
 Against 227,637 Kazakh word forms and 50,000 known non-words, hunspell 1.7.3.
 `make measure` reproduces it.
-
-The affix side is close to finished: what it can still not reach is 5,585 forms
-against the baseline's 66,073. What is left is the wordlist, which has not been
-touched — 80,941 rejected forms have no analysis that is a headword at all, and
-that number is the same in both rows because it is the same 2009 wordlist.
 
 The Kazakh dictionary every distribution ships is `kk_KZ` version
 **2009.09.01**, an OpenOffice extension by Akmaral Mussayeva, László Németh and
@@ -104,12 +99,56 @@ Neither is fixable inside a condition. Both go away if the stem is classified
 once, at its entry, and the rules are told the answer instead of guessing at
 what they cannot see.
 
+## The wordlist
+
+The 2009 wordlist enters inflected forms as headwords in their own right —
+`абай`, `абайдан` and `абайдың` are three of its 54,063 entries — because that
+was how a one-suffix affix file coped. It costs precision now: an inflected form
+entered as a stem gets a class flag of its own, so suffixes stack on top of an
+already-inflected word.
+
+`tools/prune.py` decides what to drop by asking Hunspell, twice. Build the
+dictionary without every candidate at once and keep back whatever it rejects:
+removing them together is the conservative direction, and it keeps derivations
+like `абайсыздық` that the ladder cannot tell from an inflection. Then check
+what that costs — a regenerable headword can still be the stem of something
+longer — and put back the 7,405 entries that turn out to be load-bearing.
+
+New vocabulary comes from two sources, and `data/lexicon.tsv` records which for
+every entry, so provenance stays auditable and a source can be withdrawn without
+rebuilding the rest.
+
+| | | |
+|---|---|---|
+| apertium | [apertium-kaz](https://github.com/apertium/apertium-kaz), GPL-3.0 | 30,531 entries, all with a part of speech |
+| kazdict | the sozdikqor corpus | 86,853 single-word Cyrillic headwords, 48,776 with a part of speech |
+| baseline | the 2009 wordlist | 53,971 entries, no part of speech at all |
+
+### Part of speech
+
+`-дың` is the genitive on a noun and the second-person past on a verb —
+`адамның` but `қондың` — so with nothing to tell `адам` from `қон` the affix
+file has to allow both and `*адамдың` follows. The suffix classes are therefore
+split into a nominal and a verbal track, twenty in place of ten, and residues
+are mined per track.
+
+Only stems with exactly one part of speech vote on what a track contains. A
+word that is both, like `бала`, cannot say which track a suffix belongs to, and
+counting it for both would put every verbal ending back on the nominal side.
+Such words still inflect both ways; they just do not get a vote.
+
 ### What is left
 
-`адамдың` is accepted and should not be; the genitive of `адам` is `адамның`.
-`-дың` after an `n`-final stem is a real suffix — `қондың`, "you landed" — and
-the 2009 wordlist records no part of speech, so nothing in it distinguishes
-`адам` from `қон`. Most of the residual 5.7% is this, and it is wordlist work.
+The affix file only knows the suffix chains the corpus attested, so a legal but
+unseen one is rejected: `мектептерімізде` appears nowhere in 227,637 forms and
+is not accepted, even though every one of its four suffixes is. Composing tails
+from attested morpheme pairs rather than whole attested strings would reach
+them.
+
+`адамдың` is still accepted, now for a different reason: `адамды` survives in
+the wordlist as a 2009 padded form, because dropping it would cost `адамдық`
+and its inflections, which are not headwords in their own right. Entering the
+derivations properly is what removes it.
 
 ## Layout
 
@@ -117,17 +156,23 @@ the 2009 wordlist records no part of speech, so nothing in it distinguishes
 |---|---|
 | `baseline/` | the 2009 release, byte for byte, for comparison |
 | `dict/` | generated `kk_KZ.aff` and `kk_KZ.dic` |
+| `data/lexicon.tsv` | every headword, its track, and which source it came from |
 | `data/residues.tsv` | the suffix strings Kazakh text puts on a stem, by stem class |
-| `tools/kkphon.py` | vowel harmony and final segment — what picks a suffix's shape |
+| `data/prune.txt` | headwords the affix file makes unnecessary |
+| `tools/kkphon.py` | harmony, final segment and track — what picks a suffix's shape |
+| `tools/build_lexicon.py` | the three sources → `data/lexicon.tsv` |
 | `tools/mine_residues.py` | corpus → `data/residues.tsv` |
 | `tools/gen_aff.py` | `data/residues.tsv` → a two-level `.aff` |
+| `tools/prune.py` | → `data/prune.txt`, by asking Hunspell what it can regenerate |
 | `tools/gen_dic.py` | the wordlist, with each entry's class on it |
 | `tools/measure.py` | recall, split into affix gap and wordlist gap, plus false accepts |
 | `tools/negatives.py` | non-words built by corrupting real forms |
 
-`tests/corpus_cyr.txt` and `tests/negatives.txt` are generated from kazsearch-py
-and not committed: the corpus is third-party text of uncertain provenance, and
-vendoring it would attach that question to the dictionary's licence.
+Building `dict/` needs only this repository. Rebuilding `data/` needs a corpus
+and the three wordlist sources; `make data` runs the stages in the order they
+depend on each other. `tests/corpus_cyr.txt` and `tests/negatives.txt` are
+generated and not committed — the corpus is third-party text, and vendoring it
+would attach its provenance to the dictionary's.
 
 ## Licence
 
@@ -137,6 +182,14 @@ LGPL 2.1 or later, or Mozilla MPL 1.1 or later, at your option — with
 
 The generator is derived from kazsearch-py, LGPL-3.0-or-later, itself a port of
 the Rust core of [pg-kazsearch](https://github.com/darkhanakh/pg-kazsearch).
-Generated output is distributed under **LGPL-3.0-or-later**, which the
-baseline's LGPL-2.1-or-later option permits for any wordlist material carried
-forward.
+
+The wordlist takes entries from apertium-kaz, which is **GPL-3.0**, so the
+generated dictionary is GPL-3.0 as a whole. The baseline's GPL-2.0-or-later
+option permits that for the material carried forward from it.
+
+The kazdict entries are headwords drawn from the sozdikqor corpus, which
+aggregates 60 published dictionaries. A bare list of a language's words is not
+obviously anyone's to license, but the selection may attract database rights in
+some jurisdictions, and this has not been cleared. `data/lexicon.tsv` names the
+source of every entry so that the kazdict-only ones can be dropped without
+rebuilding anything else.
