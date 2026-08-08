@@ -1,14 +1,28 @@
 # Kazakh dictionary for Hunspell
 
+Two numbers, because a spellchecker has two jobs and they pull apart. It has
+to catch mistakes, and it has to keep quiet about correct text.
+
+| | catches misspellings | underlines correct text |
+|---|---|---|
+| 2009 release | **99.0%** | 1 word in 5.5 |
+| generated | 93.9% | **1 word in 44** |
+
+The old dictionary catches almost everything by rejecting two thirds of correct
+Kazakh, which is why nobody could leave it switched on — and a spellchecker
+that is off catches nothing. Coverage and catching are the same knob, so this
+is a choice of where to sit rather than a defect to fix; `make typos` and
+`make running` are the two ends of it.
+
 On a million words of real Kazakh news prose, weighted by how often each word
 occurs — which is what a reader actually sees:
 
 | | words accepted | flagged |
 |---|---|---|
 | 2009 release | 82.1% | 1 word in 5.5 |
-| generated | **97.9%** | 1 word in 47 |
+| generated | **97.7%** | 1 word in 44 |
 
-Counting each word *type* once instead, on the same text: 58.2% → **94.7%**.
+Counting each word *type* once instead, on the same text: 58.2% → **94.3%**.
 The two differ because running text is dominated by common words, and the
 type count is the harsher test. `make running` reproduces both, against
 [KazNERD](https://github.com/IS2AI/KazNERD) (CC-BY-4.0).
@@ -27,7 +41,7 @@ of this README's numbers come from:
 
 483,752 / 11,461 / 30,256 word forms from kazdict, by the scope of the edition
 each came from, plus 50,000 constructed non-words of which the 2009 release
-accepts 1.8% and this one 5.7%. hunspell 1.7.3. `make scoped` reproduces it.
+accepts 1.8% and this one 5.5%. hunspell 1.7.3. `make scoped` reproduces it.
 
 The three columns are reported apart because the sources are not all about the
 same language, and a spellchecker for modern Kazakh *should* reject much of the
@@ -259,7 +273,7 @@ definitions barely at all.
 `make dist` builds `dist/kk_KZ.oxt`, a LibreOffice extension. For plain
 Hunspell, `dict/kk_KZ.aff` and `dict/kk_KZ.dic` are the pair.
 
-It is a first release and has not been used in anger. It accepts 5.7% of a
+It is a first release and has not been used in anger. It accepts 5.5% of a
 50,000-word set of deliberate misspellings where the 2009 release accepts 1.8%
 — the price of reaching three times as many real forms — so it will sometimes
 fail to underline a mistake. Compounds and the Latin alphabet are not handled.

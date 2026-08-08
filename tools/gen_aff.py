@@ -224,10 +224,11 @@ def segment(text: str, inventory: set[str]) -> list[str] | None:
     return None
 
 
-# How far a composed tail may run. Kazakh stacks four suffixes and the first is
-# already in level one, so three more reaches everything ordinary; letting it
-# run further mostly invents chains nobody writes.
-MAX_COMPOSED = 2
+# How far a composed tail may run. This was 2, chosen by asking only how much
+# recall each step bought. Measured against misspellings as well, the extra
+# step costs 0.6 points of catching for 0.3 of recall and 12,537 more rules —
+# a bad trade that looked like a good one because only one axis was in view.
+MAX_COMPOSED = 1
 
 # A transition seen once is as likely to be a stemmer misanalysis as a real
 # adjacency, and one bad transition multiplies through every walk that touches

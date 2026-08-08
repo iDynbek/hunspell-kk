@@ -5,13 +5,14 @@ KAZDICT   ?= ../kazdict/data/build/kazdict.db
 KAZNLP    ?= ../kaznlp/kaznlp/morphology/mdl/sfx
 KAZNERD   ?= ../KazNERD/KazNERD
 
-.PHONY: help dict aff dic check data lexicon names names-wp paradigm chains harmony corpus residues prune negatives baseline measure scoped running dist clean
+.PHONY: help dict aff dic check data lexicon names names-wp paradigm typos chains harmony corpus residues prune negatives baseline measure scoped running dist clean
 
 help:
 	@echo "make dict      generate dict/kk_KZ.aff and dict/kk_KZ.dic"
 	@echo "make check     fail if dict/kk_KZ.aff is stale"
 	@echo "make measure   measure dict/ against the 2009 release"
 	@echo "make baseline  measure the 2009 release on its own"
+	@echo "make typos     the metric that matters: does it CATCH misspellings"
 	@echo "make running   measure on real running text, weighted by word frequency"
 	@echo "make paradigm  check the full nominal grid of one stem per class"
 	@echo "make scoped    measure per source scope: modern, glossing, historical"
@@ -91,6 +92,12 @@ baseline: tests/negatives.txt
 # often it occurs, rather than a dictionary's word types counted once each.
 # The test split only: names are mined from KazNERD's training split, so
 # scoring on the whole corpus would be scoring on what was memorised.
+# A spellchecker exists to catch mistakes. Recall says how rarely it underlines
+# correct text; this says how often it does its job. The 2009 release catches
+# 99.0%, and it is shown alongside because being below it is the thing to know.
+typos: tests/corpus_cyr.txt
+	$(PY) tools/typos.py --write tests/typos.txt dict/kk_KZ baseline/kk_KZ
+
 running:
 	$(PY) tools/measure_running.py dict/kk_KZ baseline/kk_KZ \
 		--kaznerd $(KAZNERD) --split test --show-misses 10

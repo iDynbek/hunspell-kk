@@ -5,6 +5,7 @@ __pycache__/
 tests/corpus_cyr.txt
 tests/corpus.tsv
 tests/negatives.txt
+tests/typos.txt
 
 # measure.py --misses dumps
 out/

@@ -260,11 +260,50 @@ So the directives are left out and the tooling kept. If compounding is revisited
 the useful angle is probably not a rule at all but harvesting attested compounds
 into the wordlist, where each one costs nothing it does not earn.
 
+## The metric that was missing
+
+Everything measured until late in this work asked how rarely the dictionary
+underlines correct Kazakh. Nothing asked whether it catches mistakes, which is
+what a spellchecker is for. Those are different questions and they pull in
+opposite directions.
+
+`tools/negatives.py` looked like it covered the second, and does not: it
+corrupts a word's *suffix*, `-лар` for `-лер`, which is a linguist's error.
+Nobody types `мектептар`. `tools/typos.py` builds what people do type — the
+nine Kazakh letters against their Russian neighbours, keyboard slips on ЙЦУКЕН,
+doubled letters, dropped letters, transpositions.
+
+| | catches typos | underlines correct text |
+|---|---|---|
+| 2009 release | 99.0% | 18% of running text |
+| this | 93.9% | 2.3% |
+
+Seven times as many misspellings pass. The worst cell is dropped letters, where
+the 2009 release catches 95.9% and this caught 80.0%: one in five silently.
+
+The gap is not one bad component. Composition was the obvious suspect and it is
+not — turning it off buys 1.0 point of catching for 0.8 of recall, roughly
+one-for-one all the way down. It is structural. 102,034 entries and 20,505
+rules accept a far larger set of strings than 54,063 and 2,593 do, and a
+mistyped word is likelier to land on one of them. Coverage and catching are the
+same knob.
+
+Which means the 2009 release's 99% is not a standard to aim at. It is strict
+the way a broken clock is right: it rejects two thirds of correct Kazakh, so
+anyone using it turns it off, and a spellchecker that is off catches nothing.
+The question is where on the curve to sit, and that is a decision about the
+product rather than a fact about the language.
+
+What made this hard to see for so long: recall was easy to measure and went up
+with every change, so it became the objective, and the false-accept rate got
+described as "the price" — which is a way of not treating it as a result. A
+metric that measures the wrong event still feels like evidence.
+
 ## Candidate targets
 
 Numbers that could serve as targets, with what is known about each.
 
-**False accepts, currently 5.8%.** The 2009 release is at 1.8%, and that is the
+**False accepts, currently 5.5%.** The 2009 release is at 1.8%, and that is the
 only external reference point available — it is not a standard, just the thing
 being replaced. Reaching 1.8% *and* keeping recall would be the strongest
 possible result; nothing establishes it is achievable. This number is also the
@@ -284,6 +323,12 @@ it much.
 **Paradigm completeness, currently 100%** on both grids — 1,728 nominal forms
 over sixteen stems, 910 verbal over ten. What is not covered is derivation, and
 the voice suffixes (`-ыл`, `-ыс`, `-дыр`) which multiply the verbal grid again.
+
+**Catching misspellings, currently 93.9%** against the 2009 release's 99.0%.
+The most useful number here and the last one to be measured. Composition depth
+is the knob that moves it: depth 0 gives 94.2% catching and 93.8% recall,
+depth 1 gives 93.9% and 94.3%, depth 2 gives 93.2% and 94.6%. There is no
+setting that improves both.
 
 **Suggestion quality, currently unmeasured.** No harness exists, no baseline
 exists, and no comparison dictionary publishes one either. Whatever is measured
