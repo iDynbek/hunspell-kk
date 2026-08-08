@@ -20,6 +20,9 @@ Three go in, and each entry records which:
                Two fifths of what the dictionary flags in running text is a
                name, and no lexicon of common words was ever going to hold
                them; see tools/mine_names.py.
+    wikipedia  given names and surnames from Kazakh Wikipedia, after the
+               Statistics Bureau's own figures, with the bearer counts used to
+               cut the tail; see tools/fetch_names_wikipedia.py.
     baseline   the 2009 wordlist, no part of speech at all.
 
     python tools/build_lexicon.py -o data/lexicon.tsv
@@ -117,12 +120,14 @@ def main() -> int:
     ap.add_argument("--kazdict", type=Path,
                     default=ROOT.parent / "kazdict/data/build/kazdict.db")
     ap.add_argument("--names", type=Path, default=ROOT / "data/names.txt")
+    ap.add_argument("--names-wp", type=Path, default=ROOT / "data/names_wp.txt")
     ap.add_argument("--baseline", type=Path, default=ROOT / "baseline/kk_KZ.dic")
     args = ap.parse_args()
 
     sources = [("apertium", args.apertium, from_apertium),
                ("kazdict", args.kazdict, from_kazdict),
                ("kaznerd", args.names, from_names),
+               ("wikipedia", args.names_wp, from_names),
                ("baseline", args.baseline, from_baseline)]
 
     tracks: dict[str, set[str]] = collections.defaultdict(set)

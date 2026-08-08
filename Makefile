@@ -5,7 +5,7 @@ KAZDICT   ?= ../kazdict/data/build/kazdict.db
 KAZNLP    ?= ../kaznlp/kaznlp/morphology/mdl/sfx
 KAZNERD   ?= ../KazNERD/KazNERD
 
-.PHONY: help dict aff dic check data lexicon names chains corpus residues prune negatives baseline measure scoped running dist clean
+.PHONY: help dict aff dic check data lexicon names names-wp chains corpus residues prune negatives baseline measure scoped running dist clean
 
 help:
 	@echo "make dict      generate dict/kk_KZ.aff and dict/kk_KZ.dic"
@@ -35,6 +35,7 @@ check:
 # depends on what the affix file built from those residues can regenerate.
 data:
 	$(MAKE) names
+	$(MAKE) names-wp
 	$(MAKE) lexicon
 	$(MAKE) chains
 	$(MAKE) residues
@@ -80,6 +81,11 @@ running:
 names:
 	$(PY) tools/mine_names.py --kaznerd $(KAZNERD) --kazsearch $(KAZSEARCH) \
 		-o data/names.txt
+
+# Given names and surnames from Kazakh Wikipedia, after the Statistics
+# Bureau's figures. Needs network; the result is committed.
+names-wp:
+	$(PY) tools/fetch_names_wikipedia.py -o data/names_wp.txt
 
 scoped: tests/corpus.tsv tests/negatives.txt
 	$(PY) tools/measure.py dict/kk_KZ --against baseline/kk_KZ \

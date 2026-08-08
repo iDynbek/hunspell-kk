@@ -100,7 +100,7 @@ Both, on the same million words of KazNERD news text:
 | | by token | by type |
 |---|---|---|
 | 2009 release | 82.1% | 58.2% |
-| this | 97.5% | 93.6% |
+| this | 97.6% | 93.8% |
 
 The type figure is the harsher test and the token figure is the honest one for
 "what will a user see". They should probably both always be quoted, because
@@ -145,6 +145,24 @@ endings, not anything the morphology can segment. General segmentability takes
 `Алма`. Leaving an inflected name unreduced costs one redundant entry; reducing
 a real name to a fragment invents a word.
 
+Kazakh Wikipedia carries the other half, and it is the better source for the
+half KazNERD is weakest at. News text is heavy on politicians and place names
+and thin on ordinary given names; Wikipedia has 15,000 male names, 15,000
+female and 10,000 surnames, each with the number of people who bear it, taken
+from the Statistics Bureau's own release. The spelling is the one official
+documents use, so `Серик` and `Нурлан` sit beside `Серік` and `Нұрлан` — and
+the Russified forms are what people type.
+
+Bearer counts are what make the list usable: the tail is mostly transliteration
+variants, and a name three people in the country hold is not one to accept
+silently. At 50 bearers, 19,013 of 34,912 survive, and they cost 0.1pp of
+false accepts.
+
+They barely move the running-text score, because the names in news were already
+covered. That is a limit of the measurement rather than of the names: nothing
+in this repository tests a document full of ordinary personal names, which is
+where they earn their place.
+
 **Mine from train, measure on test.** KazNERD is also the evaluation corpus, so
 taking names from the same text one is scored against turns the score into a
 memory test. On the held-out split the names are worth +0.8pp by token and
@@ -161,7 +179,7 @@ possible result; nothing establishes it is achievable. This number is also the
 one most likely to matter to a user, since a false accept is a silent failure
 where a false reject is a visible one.
 
-**Token coverage on running text, currently 97.5%.** Nearest thing to a
+**Token coverage on running text, currently 97.6%.** Nearest thing to a
 user-facing number. The 2009 release is at 82.1%. Two fifths of the remainder
 is proper names, so the reachable part is smaller than 3.4% suggests.
 

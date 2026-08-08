@@ -6,9 +6,9 @@ occurs — which is what a reader actually sees:
 | | words accepted | flagged |
 |---|---|---|
 | 2009 release | 82.1% | 1 word in 5.5 |
-| generated | **97.5%** | 1 word in 40 |
+| generated | **97.6%** | 1 word in 41 |
 
-Counting each word *type* once instead, on the same text: 58.2% → **93.6%**.
+Counting each word *type* once instead, on the same text: 58.2% → **93.8%**.
 The two differ because running text is dominated by common words, and the
 type count is the harsher test. `make running` reproduces both, against
 [KazNERD](https://github.com/IS2AI/KazNERD) (CC-BY-4.0).
@@ -38,7 +38,7 @@ with the affix gap 66,073 → **3,212** and the wordlist gap 80,092 → **38,766
 | | entries |
 |---|---|
 | 2009 release | 54,063 |
-| generated | 87,373 |
+| generated | 102,636 |
 
 The Kazakh dictionary every distribution ships is `kk_KZ` version
 **2009.09.01**, an OpenOffice extension by Akmaral Mussayeva, László Németh and

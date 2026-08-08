@@ -6,12 +6,12 @@ locative. A spelling dictionary therefore stands or falls on its affix rules,
 and the one that has been in circulation since 2009 allows a word exactly one
 suffix. This one allows the chains the language actually uses.
 
-On a million words of real Kazakh news prose it accepts 97.5%, flagging about
-one word in 40. The 2009 release accepts 82.1%, flagging about one in 5.5.
+On a million words of real Kazakh news prose it accepts 97.6%, flagging about
+one word in 41. The 2009 release accepts 82.1%, flagging about one in 5.5.
 
 WHAT IS IN IT
 
-  kk_KZ.dic   87,373 entries
+  kk_KZ.dic   102,636 entries
   kk_KZ.aff   19,590 affix rules, generated from a layered model of Kazakh
               morphology rather than written by hand
 
@@ -60,8 +60,8 @@ _______________________________________________________________
 бір-ақ жалғау жалғай алады. Бұл сөздік тілде нақты кездесетін жалғау
 тізбектерін таниды.
 
-Бір миллион сөзден тұратын нақты қазақ мәтінінде бұл сөздік 97,5% сөзді
-таниды, яғни әрбір 40-шы сөзді ғана белгілейді. 2009 жылғы нұсқа — 82,1%,
+Бір миллион сөзден тұратын нақты қазақ мәтінінде бұл сөздік 97,6% сөзді
+таниды, яғни әрбір 41-ші сөзді ғана белгілейді. 2009 жылғы нұсқа — 82,1%,
 әрбір 5-6 сөздің бірін белгілейді.
 
 ЕСКЕРТУ
