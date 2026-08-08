@@ -28,6 +28,7 @@ repository; recomputing it needs a corpus, kazsearch-py and hunspell.
 from __future__ import annotations
 
 import argparse
+import collections
 import os
 import subprocess
 import sys
@@ -60,6 +61,81 @@ def spell(aff: Path, words: dict[str, str], probe: list[str]) -> set[str]:
     return set(proc.stdout.split())
 
 
+def read_sources(path: Path) -> dict[str, tuple[str, str]]:
+    """word → (its tracks, the sources that list it)."""
+    out = {}
+    for line in path.read_text(encoding="utf-8").splitlines():
+        if line and not line.startswith("#"):
+            word, tracks, sources = line.split("\t")
+            out[word] = (tracks, sources)
+    return out
+
+
+def rank(word: str, sources: dict[str, tuple[str, str]]) -> tuple[int, int, int]:
+    """How much a headword looks like a real lexeme rather than 2009 padding.
+
+    An entry only the 2009 wordlist has, and that nothing gives a part of
+    speech, is the signature of an inflected form entered as a headword to work
+    around a one-suffix affix file. `адамдық` is a noun in all three sources;
+    `адамды` is untagged and in the baseline alone. When either would explain a
+    form, the first is the one that should stay.
+    """
+    tracks, origin = sources.get(word, ("-", ""))
+    vouching = set(origin.split(",")) - {"baseline"}
+    return (tracks != "-", len(vouching), len(word))
+
+
+def admissible(word: str, covered: int, sources: dict[str, tuple[str, str]],
+               min_cover: int) -> bool:
+    """Whether a pruned headword has earned its way back.
+
+    An entry no source gives a part of speech and only the 2009 wordlist has is
+    the signature of an inflected form entered as a headword. One of those
+    should not return on the strength of a couple of forms, because the corpus
+    has typos in it and they are exactly what such an entry explains: `адамды`
+    was kept alive by `адамдын`, a misspelling of `адамдың`, and in exchange it
+    licensed `*адамдың` for every noun in its class.
+
+    Anything a real source vouches for comes back on a single form.
+    """
+    tracks, origin = sources.get(word, ("-", ""))
+    vouched = tracks != "-" or set(origin.split(",")) - {"baseline"}
+    return bool(vouched) or covered >= min_cover
+
+
+def restore(lost: set[str], redundant: set[str],
+            sources: dict[str, tuple[str, str]], ladder, min_cover: int) -> set[str]:
+    """The smallest set of pruned headwords that explains the lost forms.
+
+    The exhaustive answer — every pruned rung of every lost form — is what let
+    `адамды` back in: `адамдығымды` has both it and `адамдық` on its ladder, so
+    both returned, and the one that should not have licensed `*адамдың`.
+
+    Greedy set cover instead, taking whichever candidate covers the most forms
+    still uncovered and breaking ties on `rank`.
+    """
+    covers = collections.defaultdict(set)
+    for form in lost:
+        for rung in ladder(form.lower(), max_rungs=UNCAPPED):
+            if rung in redundant:
+                covers[rung].add(form)
+    if not covers:
+        return set()
+
+    uncovered = {form for forms in covers.values() for form in forms}
+    chosen = set()
+    while uncovered:
+        best = max(covers, key=lambda w: (len(covers[w] & uncovered), rank(w, sources)))
+        gained = covers[best] & uncovered
+        if not gained:
+            break
+        if admissible(best, len(gained), sources, min_cover):
+            chosen.add(best)
+            uncovered -= gained
+        covers.pop(best)
+    return chosen
+
+
 def main() -> int:
     ap = argparse.ArgumentParser(description=__doc__,
                                  formatter_class=argparse.RawDescriptionHelpFormatter)
@@ -68,6 +144,9 @@ def main() -> int:
     ap.add_argument("--aff", type=Path, default=ROOT / "dict/kk_KZ.aff")
     ap.add_argument("--corpus", type=Path, default=ROOT / "tests/corpus_cyr.txt")
     ap.add_argument("--kazsearch", type=Path, default=DEFAULT_KAZSEARCH)
+    ap.add_argument("--min-cover", type=int, default=3,
+                    help="forms an untagged baseline-only entry must explain "
+                         "before it is restored")
     args = ap.parse_args()
 
     if not args.corpus.exists():
@@ -79,6 +158,7 @@ def main() -> int:
         sys.exit(f"no kazsearch under {args.kazsearch} — pass --kazsearch")
 
     words = read_lexicon(args.lexicon)
+    sources = read_sources(args.lexicon)
     candidates = {w for w in words
                   if any(rung in words and rung != w
                          for rung in ladder(w, max_rungs=UNCAPPED))}
@@ -89,14 +169,25 @@ def main() -> int:
           file=sys.stderr)
 
     corpus = args.corpus.read_text(encoding="utf-8").split()
+    baseline_rejects = spell(args.aff, words, corpus)
     lost = (spell(args.aff, {w: t for w, t in words.items() if w not in redundant},
                   corpus)
-            - spell(args.aff, words, corpus))
-    load_bearing = {rung for form in lost
-                    for rung in ladder(form.lower(), max_rungs=UNCAPPED)
-                    if rung in redundant}
-    print(f"{len(lost):,} forms would be lost; {len(load_bearing):,} entries stay",
-          file=sys.stderr)
+            - baseline_rejects)
+    print(f"{len(lost):,} forms would be lost", file=sys.stderr)
+
+    load_bearing = restore(lost, redundant, sources, ladder, args.min_cover)
+    print(f"{len(load_bearing):,} entries restored", file=sys.stderr)
+
+    # Restoring a set chosen by ranking is a guess until Hunspell agrees, so
+    # check, and fall back to the exhaustive answer for anything still missing.
+    kept = {w: t for w, t in words.items()
+            if w not in redundant or w in load_bearing}
+    still = spell(args.aff, kept, sorted(lost)) - baseline_rejects
+    if still:
+        extra = restore(still, redundant, sources, ladder, args.min_cover) - load_bearing
+        load_bearing |= extra
+        print(f"{len(still):,} forms still missing, {len(extra):,} more restored",
+              file=sys.stderr)
 
     drop = sorted(redundant - load_bearing)
     args.output.parent.mkdir(parents=True, exist_ok=True)

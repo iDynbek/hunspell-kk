@@ -106,13 +106,22 @@ def morphemes(kazsearch: Path) -> set[str]:
     return {r.suffix for table in RULE_TABLES for r in getattr(rules, table)}
 
 
-def read_residues(path: Path) -> list[tuple[str, str, int]]:
+def read_residues(path: Path) -> list[tuple[str, str, str, int]]:
     rows = []
     for line in path.read_text(encoding="utf-8").splitlines():
         if line and not line.startswith("#"):
-            cls, residue, count = line.split("\t")
-            rows.append((cls, residue, int(count)))
+            cls, strip, residue, count = line.split("\t")
+            rows.append((cls, "" if strip == "0" else strip, residue, int(count)))
     return rows
+
+
+# A stem-final voiceless stop voices before a vowel-initial suffix: `кітап` is
+# `кітабы`. The rule has to strip the `п` and put `бы` on, and the plain rule
+# for the same suffix has to be kept off those three letters, or the file also
+# generates `*кітапы` — which is what it did while the miner sliced the form at
+# the stem's length.
+VOICING = {"қ": "ғ", "к": "г", "п": "б"}
+UNVOICED = "[^" + "".join(sorted(VOICING)) + "]"
 
 
 def split_first(residue: str, inventory: set[str]) -> tuple[str, str] | None:
@@ -212,17 +221,17 @@ def build(rows, inventory):
         return cut[0] if cut else residue
 
     split_rows, unsplit = [], []
-    for cls, residue, count in rows:
+    for cls, strip, residue, count in rows:
         cut = split_first(residue, inventory)
         if cut is None:
             unsplit.append((cls, residue))
         else:
-            split_rows.append((cls, cut[0], cut[1], count))
+            split_rows.append((cls, (strip, cut[0]), cut[1], count))
 
     opening = collections.Counter()
     for cls, s1, _tail, count in split_rows:
         opening[cls, s1] += count
-    keep_opening = winners(opening, sibling_key)
+    keep_opening = winners(opening, lambda s1: sibling_key(s1[1]))
 
     # The tail is voted on the same way, in the context of the morpheme it
     # follows. `-ның` after `-лар` and `-дың` after `-лар` cannot both be
@@ -261,11 +270,18 @@ def render(level1, level2) -> str:
         rules = level1.get(cls)
         if not rules:
             continue
-        out.append(f"\nSFX {CLASS_FLAG[cls]} N {len(rules)}")
-        for s1 in sorted(rules):
-            key = rules[s1]
-            append = f"{s1}/{cont_flag[key]}" if key else s1
-            out.append(f"SFX {CLASS_FLAG[cls]} 0 {append} .")
+        flag = CLASS_FLAG[cls]
+        voicing = {s1 for strip, s1 in rules if strip}
+        out.append(f"\nSFX {flag} N {len(rules)}")
+        for strip, s1 in sorted(rules):
+            key = rules[strip, s1]
+            body = (VOICING[strip] + s1) if strip else s1
+            append = f"{body}/{cont_flag[key]}" if key else body
+            # A plain rule for a suffix that is also known to voice has to be
+            # kept off the three letters that voice, or the same suffix reaches
+            # `кітап` twice and yields `*кітапы` alongside `кітабы`.
+            condition = UNVOICED if not strip and s1 in voicing else "."
+            out.append(f"SFX {flag} {strip or 0} {append} {condition}")
 
     out.append("\n# Level two: the rest of the chain, one string per attested form.")
     for key in sorted(level2):
