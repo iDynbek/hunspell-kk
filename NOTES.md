@@ -198,6 +198,41 @@ Feeding the grid back in as authoritative residues took completeness from 83.9%
 to 100%, with no cost in false accepts. Against the same grid TLemur is at
 90.5% and the 2009 release at 28.0%.
 
+## Compounding was measured and not enabled
+
+Kazakh compounds are overwhelmingly lexicalised — written solid, listed in
+dictionaries — and 14,868 of them are already in the wordlist as headwords that
+happen to be two other headwords. What a `COMPOUND*` rule adds on top is the
+combinations nobody has written down yet.
+
+`tools/mine_compounds.py` finds the elements worth trying. Grouping lexicalised
+compounds by first element turns up three kinds of thing, and separating them
+is most of the work:
+
+    авто, гидро, радио, микро    bound prefixes, genuinely productive
+    қара, қызыл, бала, ауыз      ordinary words; their compounds are listed
+    гуль, әбді, сейт, мырза      name components — сейталиев is not a compound
+
+The name components go by what an element mostly produces; the ordinary words
+go by how often the element stands alone in running text, since `авто` hardly
+ever does and `бала` constantly does.
+
+Enabling `COMPOUNDBEGIN`/`COMPOUNDEND` on the 64 that survive reached
+`агротуризм`, `микроаудан` and `гидроэлектр` — about twenty more word types,
+0.1pp — and admitted **108 new false accepts**, every one of them a real
+wrong-allomorph form: `бейнелерте` for `бейнелерде`, `автордің`, `ажыраматы`.
+A compound boundary lets a word re-split so the second part's class licenses a
+suffix the whole word does not take.
+
+Twenty types against a hundred and eight wrong acceptances, on the axis this
+dictionary is already weakest, is not a trade worth making. It also accepted
+`автоалма` and `телебала`, which is inherent: any rule permitting `авто` plus
+any noun permits those too.
+
+So the directives are left out and the tooling kept. If compounding is revisited
+the useful angle is probably not a rule at all but harvesting attested compounds
+into the wordlist, where each one costs nothing it does not earn.
+
 ## Candidate targets
 
 Numbers that could serve as targets, with what is known about each.

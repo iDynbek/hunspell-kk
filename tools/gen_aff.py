@@ -43,6 +43,7 @@ RULE_TABLES = ("PRED_RULES", "CASE_RULES", "POSS_RULES", "PLUR_RULES", "DERIV_RU
 # 51 of them used.
 CLASS_FLAG = {cls: 10 + i for i, cls in enumerate(CLASSES)}
 ELIDE_FLAG = 90
+COMPOUND_BEGIN, COMPOUND_END = 91, 92
 CONT_FLAG_BASE = 100
 
 HEADER = """\
@@ -89,6 +90,12 @@ REP и і
 REP к қ
 REP г ғ
 REP н ң
+
+# Productive compounding is deliberately not enabled; see NOTES.md. Restricted
+# to bound prefixes it reached about twenty more word types and admitted 108
+# wrong-allomorph forms — `бейнелерте` for `бейнелерде` — because a compound
+# boundary lets a word re-split so the second part licenses the wrong suffix.
+# The 14,868 compounds that are lexicalised are in the wordlist already.
 """
 
 

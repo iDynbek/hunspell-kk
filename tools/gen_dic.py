@@ -60,6 +60,15 @@ def read_elide(path: Path) -> set[str]:
 
 
 ELIDES: set[str] = set()
+OPENERS: set[str] = set()
+
+
+def read_openers(path: Path) -> set[str]:
+    """Elements that may open a compound; see tools/mine_compounds.py."""
+    if not path.exists():
+        return set()
+    return {line.strip() for line in path.read_text(encoding="utf-8").splitlines()
+            if line.strip() and not line.startswith("#")}
 
 # Stems whose harmony the corpus contradicts; see tools/mine_harmony.py.
 HARMONY: dict[str, str] = {}
@@ -82,8 +91,9 @@ def entry(word: str, tracks: str = "nv") -> str:
     # loanword's harmony is a fact about the word, not about its vowels.
     phon = (HARMONY[low] + final_class(low)) if low in HARMONY else stem_class(low)
     flags = [str(CLASS_FLAG[t + phon]) for t in tracks]
-    if word.lower() in ELIDES:
+    if low in ELIDES:
         flags.append(str(ELIDE_FLAG))
+    # Compound flags are not emitted; see NOTES.md for the measurement.
     return f"{word}/{','.join(flags)}"
 
 
@@ -94,12 +104,14 @@ def main() -> int:
     ap.add_argument("--lexicon", type=Path, default=ROOT / "data/lexicon.tsv")
     ap.add_argument("--elide", type=Path, default=ROOT / "data/elide.txt")
     ap.add_argument("--harmony", type=Path, default=ROOT / "data/harmony.tsv")
+    ap.add_argument("--compounds", type=Path, default=ROOT / "data/compounds.txt")
     ap.add_argument("--pruned", type=Path, default=ROOT / "data/prune.txt",
                     help="headwords to drop; see tools/prune.py")
     args = ap.parse_args()
 
     ELIDES.update(read_elide(args.elide))
     HARMONY.update(read_harmony(args.harmony))
+    OPENERS.update(read_openers(args.compounds))
     lexicon = read_lexicon(args.lexicon)
 
     gone = {w.lower() for w in read_pruned(args.pruned)}

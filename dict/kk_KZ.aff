@@ -42,6 +42,12 @@ REP к қ
 REP г ғ
 REP н ң
 
+# Productive compounding is deliberately not enabled; see NOTES.md. Restricted
+# to bound prefixes it reached about twenty more word types and admitted 108
+# wrong-allomorph forms — `бейнелерте` for `бейнелерде` — because a compound
+# boundary lets a word re-split so the second part licenses the wrong suffix.
+# The 14,868 compounds that are lexicalised are in the wordlist already.
+
 # Level one: the first morpheme, keyed on the stem's class.
 
 SFX 10 N 74
