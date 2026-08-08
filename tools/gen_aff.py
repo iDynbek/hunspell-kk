@@ -306,7 +306,65 @@ def compose(level2, inventory):
     return added
 
 
-def build(rows, inventory):
+def read_chains(path: Path) -> list[str]:
+    if not path.exists():
+        return []
+    return [line.split("\t")[0] for line in path.read_text(encoding="utf-8").splitlines()
+            if line and not line.startswith("#")]
+
+
+def graft(level2, level1, chains, inventory):
+    """Add KazNLP's suffix chains to the groups that can already open them.
+
+    A chain is only admitted where the class already licenses its opening
+    morpheme, so nothing here invents an allomorph the corpus argued against:
+    `-дер` goes to the groups the corpus put `-дер` in, and to no others. The
+    harmony has to agree for the same reason, since a class that takes `-дер`
+    is not one that takes `-дар`.
+    """
+    added = 0
+    openings = collections.defaultdict(set)   # (track, harmony) -> {level-one morphemes}
+    for cls, rules in level1.items():
+        for _strip, s1 in rules:
+            openings[cls[0], cls[1]].add(s1)
+
+    # What shape of each morpheme a group has already been shown to take. A
+    # chain offering a different one is not new information, it is a
+    # contradiction, and the corpus is the better witness about this stem.
+    settled = {}
+    for key, tails in level2.items():
+        shapes = collections.defaultdict(set)
+        for tail in tails:
+            cut = split_first(tail, inventory)
+            if cut and sibling_key(cut[0]):
+                shapes[sibling_key(cut[0])].add(cut[0])
+        settled[key] = shapes
+
+    for chain in chains:
+        cut = split_first(chain, inventory)
+        if cut is None:
+            continue
+        s1, tail = cut
+        if not tail:
+            continue
+        wants = harmony_of(chain)
+        opener = split_first(tail, inventory)
+        family = sibling_key(opener[0]) if opener else None
+        for (track, harmony), morphemes in openings.items():
+            if s1 not in morphemes or (wants and wants != harmony):
+                continue
+            key = (track, harmony, ("", s1))
+            if key not in level2 or tail in level2[key]:
+                continue
+            decided = settled[key].get(family) if family else None
+            if decided and opener[0] not in decided:
+                continue
+            level2[key].add(tail)
+            added += 1
+    return added
+
+
+def build(rows, inventory, chains):
     """(class → its level-one rules, continuation group → its level-two rules)."""
     def cont_key(cls: str, s1: str) -> tuple[str, str, str]:
         """What a level-two group is keyed on: track, harmony, opening morpheme.
@@ -361,8 +419,9 @@ def build(rows, inventory):
                 continue
             level1[cls][s1] = key
             level2[key].add(tail)
+    grafted = graft(level2, level1, chains, inventory)
     composed = compose(level2, inventory)
-    return level1, level2, unsplit, rejected, composed
+    return level1, level2, unsplit, rejected, composed, grafted
 
 
 def render(level1, level2) -> str:
@@ -403,11 +462,13 @@ def main() -> int:
     ap.add_argument("-o", "--output", type=Path)
     ap.add_argument("--check", type=Path, help="exit non-zero if this file is stale")
     ap.add_argument("--residues", type=Path, default=ROOT / "data/residues.tsv")
+    ap.add_argument("--chains", type=Path, default=ROOT / "data/chains.tsv")
     ap.add_argument("--kazsearch", type=Path, default=DEFAULT_KAZSEARCH)
     args = ap.parse_args()
 
     rows = read_residues(args.residues)
-    level1, level2, unsplit, rejected, composed = build(rows, morphemes(args.kazsearch))
+    level1, level2, unsplit, rejected, composed, grafted = build(
+        rows, morphemes(args.kazsearch), read_chains(args.chains))
     text = render(level1, level2)
 
     n1 = sum(len(v) for v in level1.values())
@@ -416,8 +477,8 @@ def main() -> int:
           f"{len(level2):,} continuation groups", file=sys.stderr)
     print(f"{rejected:,} residues dropped as a minority allomorph, "
           f"{len(unsplit):,} with no morpheme boundary", file=sys.stderr)
-    print(f"{composed:,} level-two rules composed from attested morpheme pairs",
-          file=sys.stderr)
+    print(f"{grafted:,} level-two rules from KazNLP chains, "
+          f"{composed:,} composed from attested morpheme pairs", file=sys.stderr)
 
     if args.check:
         current = args.check.read_text(encoding="utf-8")

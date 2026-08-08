@@ -3,7 +3,7 @@
 |  | entries | recall | affix gap | wordlist gap | false accepts |
 |---|---|---|---|---|---|
 | 2009 release | 54,063 | 35.8% | 66,073 | 80,092 | 2.1% |
-| generated | 89,389 | **77.3%** | **3,376** | **48,304** | 5.6% |
+| generated | 86,976 | **78.8%** | **3,190** | **45,100** | 6.1% |
 
 Against 227,637 Kazakh word forms and 50,000 known non-words, hunspell 1.7.3.
 `make measure` reproduces it.
@@ -124,6 +124,10 @@ rebuilding the rest.
 | kazdict | the sozdikqor corpus | 86,853 single-word Cyrillic headwords, 48,776 with a part of speech |
 | baseline | the 2009 wordlist | 53,971 entries, no part of speech at all |
 
+[KazNLP](https://github.com/nlacslab/kaznlp) contributes no vocabulary — its
+`md` table holds only 5,806 Cyrillic stems, being a disambiguation model rather
+than a lexicon — but its suffix inventory is used for the affix file, below.
+
 ### Part of speech
 
 `-дың` is the genitive on a noun and the second-person past on a verb —
@@ -151,6 +155,7 @@ vowel out of the middle rather than replacing the last letter.
 
 ### Chains nobody wrote down
 
+
 A level-two tail had to have been attested end to end, which rejected
 `мектептерімізде`: the string `терімізде` appears nowhere in 227,637 forms,
 though `тер`, `іміз` and `де` all do, in that order. `gen_aff.py` records
@@ -165,6 +170,24 @@ consonant alone, which is what keeps the walk from inventing an allomorph:
 `-ның` after `-лар` stays unreachable unless something attested it, and an
 order the corpus never showed does not exist to be walked.
 
+[KazNLP](https://github.com/nlacslab/kaznlp) supplies the rest.
+`kaznlp/morphology/mdl/sfx` is a suffix inventory that has already been
+unfolded — 1,148 strings, each tagged with the analysis it stands for, up to
+five morphemes deep:
+
+```
+деріміз      N1-S5           plural, first person plural possessive
+дерімізді    N1-S5-C4        and accusative
+тылуына      V4-V2-ET_ETU-S3-C3
+```
+
+It is the same unfolding this repository does, arrived at independently and
+from a treebank rather than from running text, so it holds chains the corpus
+does not. A chain is only admitted to a group that already licenses its opening
+morpheme, in the matching harmony, and only where the group has not already
+been shown to take a different shape of the same morpheme — so it can add
+what the corpus was silent about without overruling what the corpus said.
+
 ## Layout
 
 | | |
@@ -173,10 +196,12 @@ order the corpus never showed does not exist to be walked.
 | `dict/` | generated `kk_KZ.aff` and `kk_KZ.dic` |
 | `data/lexicon.tsv` | every headword, its track, and which source it came from |
 | `data/residues.tsv` | the suffix strings Kazakh text puts on a stem, by stem class |
+| `data/chains.tsv` | KazNLP's unfolded suffix inventory, with its analyses |
 | `data/prune.txt` | headwords the affix file makes unnecessary |
 | `tools/kkphon.py` | harmony, final segment and track — what picks a suffix's shape |
 | `tools/build_lexicon.py` | the three sources → `data/lexicon.tsv` |
 | `tools/mine_residues.py` | corpus → `data/residues.tsv` |
+| `tools/import_chains.py` | KazNLP's `sfx` table → `data/chains.tsv` |
 | `tools/gen_aff.py` | `data/residues.tsv` → a two-level `.aff` |
 | `tools/prune.py` | → `data/prune.txt`, by asking Hunspell what it can regenerate |
 | `tools/gen_dic.py` | the wordlist, with each entry's class on it |

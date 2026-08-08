@@ -2,8 +2,9 @@ PY ?= python3
 KAZSEARCH ?= ../kazsearch-py
 APERTIUM  ?= ../apertium-kaz/apertium-kaz.kaz.lexc
 KAZDICT   ?= ../kazdict/data/build/kazdict.db
+KAZNLP    ?= ../kaznlp/kaznlp/morphology/mdl/sfx
 
-.PHONY: help dict aff dic check data lexicon residues prune negatives baseline measure clean
+.PHONY: help dict aff dic check data lexicon chains residues prune negatives baseline measure clean
 
 help:
 	@echo "make dict      generate dict/kk_KZ.aff and dict/kk_KZ.dic"
@@ -30,6 +31,7 @@ check:
 # depends on what the affix file built from those residues can regenerate.
 data:
 	$(MAKE) lexicon
+	$(MAKE) chains
 	$(MAKE) residues
 	$(MAKE) aff
 	$(MAKE) prune
@@ -38,6 +40,9 @@ data:
 lexicon:
 	$(PY) tools/build_lexicon.py --apertium $(APERTIUM) --kazdict $(KAZDICT) \
 		-o data/lexicon.tsv
+
+chains:
+	$(PY) tools/import_chains.py --sfx $(KAZNLP) -o data/chains.tsv
 
 tests/corpus_cyr.txt:
 	$(PY) tools/measure.py baseline/kk_KZ --kazsearch $(KAZSEARCH) >/dev/null
