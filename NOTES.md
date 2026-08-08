@@ -367,6 +367,46 @@ So for anyone outside Microsoft Office, the practical choice for Kazakh is
 this dictionary or Apertium's FST, and everything that speaks Hunspell can
 only load this one.
 
+## Apertium as auditor
+
+The comparison above priced Apertium's advantage; installing it locally (a
+Debian distrobox, `apertium-kaz` + `hfst` from the apertium nightly repo)
+turned it into a tool. Exact numbers first, on the full held-out sets with
+case-folding retry — `hfst-lookup` is case-sensitive and KazNERD is full of
+capitals, which silently deflated the first attempt by ten points:
+
+| | tokens | types | catches typos |
+|---|---|---|---|
+| apertium-kaz, exact | 95.5% | 88.8% | 98.7% |
+| this, before the audit | 97.7% | 94.3% | 94.0% |
+| this, after | 96.8% | 93.1% | **95.8%** |
+
+`tools/audit_apertium.py` synthesizes every chain the affix file licenses onto
+five stems per class that Apertium recognises as lemmas of the right part of
+speech, and asks its analyzer. **Half the licensed chains — 9,416 of 18,886 —
+were refused on every stem**: mining invents, and this is the bill. A refused
+chain is vetoed unless the corpus attests it above a threshold or a paradigm
+grid pins it, because Apertium's own lexicon has gaps and direct evidence
+outranks its silence.
+
+The threshold is the strictness dial, and it saturates:
+
+| protect ≥ | catches | token | type |
+|---|---|---|---|
+| none | 94.0% | 97.7% | 94.3% |
+| 5 | 95.0% | 97.3% | 93.7% |
+| 25 (shipped) | 95.8% | 96.8% | 93.1% |
+| 60 | 95.8% | 96.6% | 92.7% |
+
+Shipped at 25 — everything the audit can give before the curve goes flat.
+Dropped-letter catching, the worst cell, went 81.8% → 86.5%, and the
+suffix-corruption negatives fell 2.7% → 2.3%. Both paradigm grids stay at
+100%, because pins outrank the veto by construction.
+
+What remains of the catch gap to Apertium (95.8 against 98.7) is the price of
+our larger lexicon: more accepted strings means more places for a typo to
+land, and the residual is structural, not another audit away.
+
 ## Candidate targets
 
 Numbers that could serve as targets, with what is known about each.
@@ -392,7 +432,7 @@ it much.
 over sixteen stems, 910 verbal over ten. What is not covered is derivation, and
 the voice suffixes (`-ыл`, `-ыс`, `-дыр`) which multiply the verbal grid again.
 
-**Catching misspellings, currently 94.0%** against the 2009 release's 99.0%.
+**Catching misspellings, currently 95.8%** against the 2009 release's 99.0%.
 The most useful number here and the last one to be measured. Composition depth
 is the knob that moves it: depth 0 gives 94.2% catching and 93.8% recall,
 depth 1 gives 93.9% and 94.3%, depth 2 gives 93.2% and 94.6%. There is no

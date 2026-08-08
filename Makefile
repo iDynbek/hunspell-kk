@@ -5,7 +5,7 @@ KAZDICT   ?= ../kazdict/data/build/kazdict.db
 KAZNLP    ?= ../kaznlp/kaznlp/morphology/mdl/sfx
 KAZNERD   ?= ../KazNERD/KazNERD
 
-.PHONY: help dict aff dic check data lexicon names names-wp paradigm typos chains harmony dist-xpi corpus residues prune negatives baseline measure scoped running dist clean
+.PHONY: help dict aff dic check data lexicon names names-wp paradigm typos chains harmony audit dist-xpi corpus residues prune negatives baseline measure scoped running dist clean
 
 help:
 	@echo "make dict      generate dict/kk_KZ.aff and dict/kk_KZ.dic"
@@ -74,6 +74,14 @@ paradigm:
 		--residues data/paradigm.tsv dict/kk_KZ
 	$(PY) tools/verb_paradigm.py --write tests/verb_paradigms.tsv \
 		--residues data/verb_paradigm.tsv dict/kk_KZ
+
+# Ask apertium-kaz's grammar about every chain the aff licenses; needs the
+# `apertium` distrobox (see tools/audit_apertium.py) and a veto-free aff.
+audit:
+	mv -f data/apertium_veto.tsv data/apertium_veto.tsv.bak 2>/dev/null || true
+	$(MAKE) aff
+	$(PY) tools/audit_apertium.py --threshold 25 -o data/apertium_veto.tsv
+	$(MAKE) aff
 
 harmony: tests/corpus_cyr.txt
 	$(PY) tools/mine_harmony.py --kazsearch $(KAZSEARCH) --kaznerd $(KAZNERD) \

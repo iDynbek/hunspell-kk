@@ -446,12 +446,30 @@ def n_series_violation(cls: str, residue: str) -> bool:
     return residue.startswith(N_SERIES)          # n-series with no possessive
 
 
-def build(rows, inventory, chains, pinned=frozenset()):
+def read_veto(path: Path) -> frozenset:
+    """(class, chain) pairs apertium-kaz's grammar refuses on every stem tried.
+
+    The audit synthesized every chain this file licenses onto five stems per
+    class that Apertium recognises as lemmas, and asked its analyzer. A chain
+    rejected everywhere, unattested in the corpus above noise level, and not
+    paradigm-pinned, is a chain the mining invented — half of them were.
+    """
+    if not path.exists():
+        return frozenset()
+    return frozenset(tuple(line.split("\t")) for line in
+                     path.read_text(encoding="utf-8").splitlines()
+                     if line and not line.startswith("#"))
+
+
+def build(rows, inventory, chains, pinned=frozenset(), veto=frozenset()):
     """(class → its level-one rules, continuation group → its level-two rules)."""
     dropped_clash = sum(1 for cls, _s, res, _c in rows if clashes(cls, res))
     rows = [r for r in rows if not clashes(r[0], r[2])]
     dropped_n = sum(1 for _cls, _s, res, _c in rows if n_series_violation(_cls, res))
     rows = [r for r in rows if not n_series_violation(r[0], r[2])]
+    dropped_v = sum(1 for cls, s, res, _c in rows if not s and (cls, res) in veto)
+    rows = [r for r in rows if r[1] or (r[0], r[2]) not in veto]
+    print(f"{dropped_v:,} residues vetoed by the apertium audit", file=sys.stderr)
     print(f"{dropped_clash:,} residues dropped for clashing with their "
           f"class's harmony, {dropped_n:,} for misplacing the н-series cases",
           file=sys.stderr)
@@ -531,10 +549,19 @@ def build(rows, inventory, chains, pinned=frozenset()):
     # answers to its group — its harmony to the group's harmony, and what may
     # follow a possessive opener to the н-series rule.
     swept = 0
-    for (track, group_harmony, (_strip, opener)), tails in level2.items():
+    for (track, group_harmony, (strip_, opener)), tails in level2.items():
         doomed = {t for t in tails if clashes(track + group_harmony, t)}
         if opener in POSS3:
             doomed |= {t for t in tails if t.startswith(PLAIN_CASES)}
+        if veto and not strip_:
+            # A tail serves every class of its track and harmony that links to
+            # this opener; it goes only when the audit refused the full chain
+            # on all of them.
+            sharing = [cls for cls in level1
+                       if cls[0] == track and cls[1] == group_harmony
+                       and (strip_, opener) in level1[cls]]
+            doomed |= {t for t in tails
+                       if sharing and all((cls, opener + t) in veto for cls in sharing)}
         tails -= doomed
         swept += len(doomed)
     print(f"{swept:,} level-two tails swept by the same checks", file=sys.stderr)
@@ -611,7 +638,8 @@ def main() -> int:
             if "paradigm" in path.name:
                 pinned.add((row[0], row[1], row[2]))
     level1, level2, elisions, unsplit, rejected, composed, grafted = build(
-        rows, morphemes(args.kazsearch), read_chains(args.chains), pinned)
+        rows, morphemes(args.kazsearch), read_chains(args.chains), pinned,
+        read_veto(ROOT / "data/apertium_veto.tsv"))
     text = render(level1, level2, elisions)
 
     n1 = sum(len(v) for v in level1.values())
