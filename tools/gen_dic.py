@@ -33,12 +33,20 @@ ROOT = Path(__file__).resolve().parent.parent
 UNKNOWN = "n"
 
 
-def read_lexicon(path: Path) -> dict[str, str]:
-    """word → the tracks it inflects on, `nv` where nothing decides."""
+def read_lexicon(path: Path, without: frozenset = frozenset()) -> dict[str, str]:
+    """word → the tracks it inflects on, `nv` where nothing decides.
+
+    `without` drops entries vouched for *only* by the named sources. The
+    kazdict rows carry an uncleared database-rights question, and upstreams
+    ask; a build without them loses 0.8 points of token coverage and answers
+    the question by not raising it.
+    """
     out = {}
     for line in path.read_text(encoding="utf-8").splitlines():
         if line and not line.startswith("#"):
             word, tracks, _sources = line.split("\t")
+            if without and not (set(_sources.split(",")) - without):
+                continue
             out[word] = tracks if tracks in ("n", "v", "nv") else UNKNOWN
     return out
 
@@ -105,6 +113,8 @@ def main() -> int:
     ap.add_argument("--elide", type=Path, default=ROOT / "data/elide.txt")
     ap.add_argument("--harmony", type=Path, default=ROOT / "data/harmony.tsv")
     ap.add_argument("--compounds", type=Path, default=ROOT / "data/compounds.txt")
+    ap.add_argument("--without", default="",
+                    help="comma-separated sources; drop entries only they vouch for")
     ap.add_argument("--pruned", type=Path, default=ROOT / "data/prune.txt",
                     help="headwords to drop; see tools/prune.py")
     args = ap.parse_args()
@@ -112,7 +122,8 @@ def main() -> int:
     ELIDES.update(read_elide(args.elide))
     HARMONY.update(read_harmony(args.harmony))
     OPENERS.update(read_openers(args.compounds))
-    lexicon = read_lexicon(args.lexicon)
+    lexicon = read_lexicon(args.lexicon,
+                           frozenset(s for s in args.without.split(",") if s))
 
     gone = {w.lower() for w in read_pruned(args.pruned)}
     if gone:

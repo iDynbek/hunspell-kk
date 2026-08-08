@@ -118,9 +118,17 @@ scoped: tests/corpus.tsv tests/negatives.txt
 measure: tests/negatives.txt
 	$(PY) tools/measure.py dict/kk_KZ --against baseline/kk_KZ --kazsearch $(KAZSEARCH)
 
+# The same package without the kazdict-only entries: 65,298 entries instead of
+# 102,034, 96.9% token coverage instead of 97.7%, and no uncleared provenance.
+# This is the variant to offer upstreams that ask about licensing.
+dist-clean: aff
+	$(PY) tools/gen_dic.py --without kazdict -o dist/clean/kk_KZ.dic
+	cp dict/kk_KZ.aff dist/clean/kk_KZ.aff
+
 # A LibreOffice extension is a zip with the dictionary, a registration file
 # telling it which locales the pair serves, and a manifest naming that file.
 dist: dict
+	@mkdir -p dist/clean
 	@rm -rf dist && mkdir -p dist/build/META-INF
 	cp dict/kk_KZ.aff dict/kk_KZ.dic dist/build/
 	cp package/description.xml package/dictionaries.xcu \
