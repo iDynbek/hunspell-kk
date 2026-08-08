@@ -11,7 +11,7 @@ one word in 41. The 2009 release accepts 82.1%, flagging about one in 5.5.
 
 WHAT IS IN IT
 
-  kk_KZ.dic   102,636 entries
+  kk_KZ.dic   102,034 entries
   kk_KZ.aff   19,590 affix rules, generated from a layered model of Kazakh
               morphology rather than written by hand
 

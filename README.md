@@ -38,7 +38,7 @@ with the affix gap 66,073 → **3,212** and the wordlist gap 80,092 → **38,766
 | | entries |
 |---|---|
 | 2009 release | 54,063 |
-| generated | 102,636 |
+| generated | 102,034 |
 
 The Kazakh dictionary every distribution ships is `kk_KZ` version
 **2009.09.01**, an OpenOffice extension by Akmaral Mussayeva, László Németh and
