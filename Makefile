@@ -4,7 +4,7 @@ APERTIUM  ?= ../apertium-kaz/apertium-kaz.kaz.lexc
 KAZDICT   ?= ../kazdict/data/build/kazdict.db
 KAZNLP    ?= ../kaznlp/kaznlp/morphology/mdl/sfx
 
-.PHONY: help dict aff dic check data lexicon chains corpus residues prune negatives baseline measure scoped clean
+.PHONY: help dict aff dic check data lexicon chains corpus residues prune negatives baseline measure scoped dist clean
 
 help:
 	@echo "make dict      generate dict/kk_KZ.aff and dict/kk_KZ.dic"
@@ -13,6 +13,7 @@ help:
 	@echo "make baseline  measure the 2009 release on its own"
 	@echo "make scoped    measure per source scope: modern, glossing, historical"
 	@echo "make data      rebuild everything under data/ (needs the sources)"
+	@echo "make dist      package dist/kk_KZ.oxt for LibreOffice"
 
 # Building the dictionary needs only this repository: everything corpus-derived
 # is committed under data/.
@@ -72,5 +73,17 @@ scoped: tests/corpus.tsv tests/negatives.txt
 measure: tests/negatives.txt
 	$(PY) tools/measure.py dict/kk_KZ --against baseline/kk_KZ --kazsearch $(KAZSEARCH)
 
+# A LibreOffice extension is a zip with the dictionary, a registration file
+# telling it which locales the pair serves, and a manifest naming that file.
+dist: dict
+	@rm -rf dist && mkdir -p dist/build/META-INF
+	cp dict/kk_KZ.aff dict/kk_KZ.dic dist/build/
+	cp package/description.xml package/dictionaries.xcu \
+		package/README_kk_KZ.txt COPYING dist/build/
+	cp package/META-INF/manifest.xml dist/build/META-INF/
+	cd dist/build && zip -q -r ../kk_KZ.oxt . && cd ../..
+	@rm -rf dist/build
+	@ls -l dist/kk_KZ.oxt
+
 clean:
-	rm -rf tests/corpus_cyr.txt tests/corpus.tsv tests/negatives.txt __pycache__ tools/__pycache__
+	rm -rf dist tests/corpus_cyr.txt tests/corpus.tsv tests/negatives.txt __pycache__ tools/__pycache__

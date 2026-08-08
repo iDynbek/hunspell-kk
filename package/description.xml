@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<description xmlns="http://openoffice.org/extensions/description/2006" xmlns:d="http://openoffice.org/extensions/description/2006" xmlns:xlink="http://www.w3.org/1999/xlink">
+    <version value="0.1.0" />
+    <identifier value="org.iDynbek.kk.hunspell.dictionaries" />
+    <display-name>
+        <name lang="en-US">Kazakh spelling dictionary</name>
+        <name lang="kk">Орфографиялық қазақ тілі сөздігі</name>
+    </display-name>
+    <platform value="all" />
+    <dependencies>
+        <OpenOffice.org-minimal-version value="3.0" d:name="OpenOffice.org 3.0" />
+    </dependencies>
+    <registration>
+        <simple-license accept-by="admin" default-license-id="gpl3" suppress-on-update="true">
+            <license-text xlink:href="COPYING" lang="en-US" license-id="gpl3" />
+        </simple-license>
+    </registration>
+</description>

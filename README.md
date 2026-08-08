@@ -234,6 +234,16 @@ wherever else it appears. Tokens come from sense text rather than headwords,
 because that is where running Kazakh is; kazdict normalises headwords hard and
 definitions barely at all.
 
+## Installing
+
+`make dist` builds `dist/kk_KZ.oxt`, a LibreOffice extension. For plain
+Hunspell, `dict/kk_KZ.aff` and `dict/kk_KZ.dic` are the pair.
+
+It is a first release and has not been used in anger. It accepts 6.8% of a
+50,000-word set of deliberate misspellings where the 2009 release accepts 2.1%
+— the price of reaching three times as many real forms — so it will sometimes
+fail to underline a mistake. Compounds and the Latin alphabet are not handled.
+
 ## Layout
 
 | | |
@@ -250,6 +260,8 @@ definitions barely at all.
 | `tools/mine_residues.py` | corpus → `data/residues.tsv` |
 | `tools/import_chains.py` | KazNLP's `sfx` table → `data/chains.tsv` |
 | `tools/build_corpus.py` | kazdict → a corpus with each token's source scope |
+| `package/` | LibreOffice extension metadata |
+| `NOTES.md` | what other dictionaries do, and what could be measured |
 | `tools/gen_aff.py` | `data/residues.tsv` → a two-level `.aff` |
 | `tools/prune.py` | → `data/prune.txt`, by asking Hunspell what it can regenerate |
 | `tools/gen_dic.py` | the wordlist, with each entry's class on it |
@@ -263,6 +275,8 @@ generated and not committed — the corpus is third-party text, and vendoring it
 would attach its provenance to the dictionary's.
 
 ## Licence
+
+**GPL-3.0-or-later**, because apertium-kaz is; see `COPYING`.
 
 `baseline/` is redistributed under its own terms — GNU GPL 2.0 or later, GNU
 LGPL 2.1 or later, or Mozilla MPL 1.1 or later, at your option — with
