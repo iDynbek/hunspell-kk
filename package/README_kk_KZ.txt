@@ -1,5 +1,13 @@
 		Kazakh spelling dictionary for Hunspell
-		version 0.1.0
+		version 0.1.1
+
+INSTALLING IN LIBREOFFICE
+
+Open LibreOffice, then Tools -> Extension Manager -> Add, and choose this
+.oxt file. Do NOT install by double-clicking the file: some LibreOffice
+builds (notably the Flatpak) crash when opening an .oxt directly — this is a
+LibreOffice bug that affects every extension, not this dictionary. Installing
+through the Extension Manager menu avoids it. Restart LibreOffice afterwards.
 
 Kazakh is agglutinative: мектептерімізде is мектеп plus plural, possessive and
 locative. A spelling dictionary therefore stands or falls on its affix rules,

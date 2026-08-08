@@ -10,6 +10,11 @@ Spelling dictionary for Kazakh (kk-KZ). Accepts 97.7% of real Kazakh text
 where the widespread 2009 dictionary accepts 82%, with full nominal and
 verbal inflection.
 
+**Install note (put in the description):**
+Install via Tools → Extension Manager → Add. Do not double-click the .oxt on
+the Flatpak build of LibreOffice — a LibreOffice bug crashes it when opening
+any extension file directly; the Extension Manager menu is unaffected.
+
 **Long description:**
 Kazakh is agglutinative: мектептерімізде is мектеп plus plural, possessive
 and locative, and a dictionary that allows only one suffix per word — as the
