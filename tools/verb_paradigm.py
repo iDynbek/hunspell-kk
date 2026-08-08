@@ -61,6 +61,44 @@ def negation(stem: str) -> str:
     return pick("ма", "ме", stem)
 
 
+SONORANT = frozenset("лмнңр")
+
+
+def voices(stem: str) -> list[tuple[str, str]]:
+    """The voice stems a verb derives, each a new verb in its own right.
+
+    Kazakh builds passive, reflexive, reciprocal and causative stems with
+    suffixes that then take the whole tense and person grid on top — `жаз`,
+    `жазыл`, `жазылады`, `жазылмағанмын`. The allomorphs go by the stem's last
+    segment, and the passive is the awkward one: after `л` it is `-ын`, not
+    `-ыл`, because `аллын` is not pronounceable.
+    """
+    last = stem[-1]
+    vowel = vowel_final(stem)
+
+    if vowel:
+        passive = stem + "л"
+    elif last == "л":
+        passive = stem + pick("ын", "ін", stem)
+    else:
+        passive = stem + pick("ыл", "іл", stem)
+
+    reflexive = stem + ("н" if vowel else pick("ын", "ін", stem))
+    reciprocal = stem + ("с" if vowel else pick("ыс", "іс", stem))
+
+    if vowel:
+        causative = stem + "т"
+    elif last in VOICELESS:
+        causative = stem + pick("тыр", "тір", stem)
+    elif last == "р":
+        causative = stem + pick("ғыз", "гіз", stem)
+    else:
+        causative = stem + pick("дыр", "дір", stem)
+
+    return [("pass", passive), ("refl", reflexive),
+            ("recip", reciprocal), ("caus", causative)]
+
+
 def before_u(stem: str) -> str:
     """A stem-final `ы`/`і` is lost before `-у`: `оқы` gives `оқу`, not `оқыу`."""
     return stem[:-1] if stem[-1:] in "ыі" else stem
@@ -166,12 +204,33 @@ def main() -> int:
     ap.add_argument("--write", type=Path)
     ap.add_argument("--residues", type=Path)
     ap.add_argument("--weight", type=int, default=60)
+    ap.add_argument("--voices", action="store_true",
+                    help="also run the grid over passive, reflexive, reciprocal "
+                         "and causative stems")
     ap.add_argument("--validate", action="store_true",
                     help="report which generated forms KazNERD never contains")
     ap.add_argument("--kaznerd", type=Path, default=ROOT.parent / "KazNERD/KazNERD")
     args = ap.parse_args()
 
     grid = [(stem, label, form) for stem in STEMS for label, form in paradigm(stem)]
+    kept = []
+    if args.voices:
+        # Voice is derivational, not inflectional: `оқы` has no reflexive and
+        # `сөйле` no passive, and which verbs have which is lexical. Only the
+        # voice stems the language actually uses are kept — attested in
+        # KazNERD or present in the wordlist.
+        from measure_running import tokens
+        from gen_dic import read_lexicon
+        real = ({w.lower() for w in tokens(args.kaznerd, "*")}
+                if args.kaznerd.exists() else set())
+        real |= set(read_lexicon(ROOT / "data/lexicon.tsv"))
+        kept = [(stem, voice, derived) for stem in STEMS
+                for voice, derived in voices(stem) if derived in real]
+        print(f"{len(kept)} of {len(STEMS) * 4} voice stems exist",
+              file=sys.stderr)
+        grid += [(stem, f"{voice}.{label}", form)
+                 for stem, voice, derived in kept
+                 for label, form in paradigm(derived)]
 
     if args.validate:
         from measure_running import tokens
@@ -199,9 +258,14 @@ def main() -> int:
     if args.residues:
         from kkphon import stem_class
         rows = set()
+        # Residues are taken against the base stem, so the chain carries the
+        # voice suffix with it: `жаз` to `жазылады` is the residue `ылады`.
+        by_stem = {s: [f for _l, f in paradigm(s)] for s in STEMS}
+        for stem, _voice, derived in kept:
+            by_stem[stem] = by_stem[stem] + [f for _l, f in paradigm(derived)]
         for stem in STEMS:
             cls = "v" + stem_class(stem)
-            for _label, form in paradigm(stem):
+            for form in by_stem[stem]:
                 if form == stem:
                     continue
                 # A general strip, not the narrow one mine_residues computes:

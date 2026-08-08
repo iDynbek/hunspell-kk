@@ -276,7 +276,7 @@ doubled letters, dropped letters, transpositions.
 | | catches typos | underlines correct text |
 |---|---|---|
 | 2009 release | 99.0% | 18% of running text |
-| this | 93.9% | 2.3% |
+| this | 94.0% | 2.3% |
 
 Seven times as many misspellings pass. The worst cell is dropped letters, where
 the 2009 release catches 95.9% and this caught 80.0%: one in five silently.
@@ -299,11 +299,42 @@ with every change, so it became the objective, and the false-accept rate got
 described as "the price" — which is a way of not treating it as a result. A
 metric that measures the wrong event still feels like evidence.
 
+## Grammar the mining could not learn
+
+Halving the false-accept rate (5.5% → 2.8%) came from encoding two rules the
+corpus statistics kept missing, plus one bug.
+
+**A residue must agree with its class's harmony.** The class flag already says
+back or front, yet mined residues contradicted it 159 times — `-лық` on `nfv` —
+each one licensing the wrong form for a whole class. The check needs an
+exemption list: `-мен`/`-нікі` and family are genuinely invariant, and the
+splitter must not cut inside them, or `ымен` becomes `ым`+`ен` and the front
+half fails the sweep, taking `адамымен` with it.
+
+**The н-series cases exist only after a third-person possessive.** `баласында`
+but `абақтыда`; `айтқанына`, never `айтқаныға`. Mined residues had both errors
+from padded headwords and corpus noise. Two exceptions matter: nasal-final
+stems take `-нан/-нен` as their plain ablative (`саннан`), and on a verb an
+opening `н` is the reflexive voice, not a case (`сөйленетін`).
+
+**The chain gate counted `у` as a back vowel.** `harmony_of` in the generator
+disagreed with `kkphon` about the infinitive marker, so the chain `уде` read as
+back-committed and walked its front tail into every back group: `айдауде`.
+The same constant defined twice, drifting apart.
+
+Also: residues generated from the paradigm grids are grammar, not evidence, and
+must be pinned past the corpus-frequency vote — the reflexive opener `не` was
+outvoted by its `лдтн`-siblings and took two paradigm cells with it.
+
+And the benchmark itself was checked first this time: only 5 of 2,767 accepted
+negatives appear anywhere in a million words of running text, so they were
+genuine non-words, not another `ойнайсыз`.
+
 ## Candidate targets
 
 Numbers that could serve as targets, with what is known about each.
 
-**False accepts, currently 5.5%.** The 2009 release is at 1.8%, and that is the
+**False accepts, currently 2.8%.** The 2009 release is at 1.8%, and that is the
 only external reference point available — it is not a standard, just the thing
 being replaced. Reaching 1.8% *and* keeping recall would be the strongest
 possible result; nothing establishes it is achievable. This number is also the
@@ -324,7 +355,7 @@ it much.
 over sixteen stems, 910 verbal over ten. What is not covered is derivation, and
 the voice suffixes (`-ыл`, `-ыс`, `-дыр`) which multiply the verbal grid again.
 
-**Catching misspellings, currently 93.9%** against the 2009 release's 99.0%.
+**Catching misspellings, currently 94.0%** against the 2009 release's 99.0%.
 The most useful number here and the last one to be measured. Composition depth
 is the knob that moves it: depth 0 gives 94.2% catching and 93.8% recall,
 depth 1 gives 93.9% and 94.3%, depth 2 gives 93.2% and 94.6%. There is no

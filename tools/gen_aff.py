@@ -25,6 +25,7 @@ import argparse
 import collections
 import difflib
 import os
+import re
 import sys
 from pathlib import Path
 
@@ -133,6 +134,11 @@ VOICING = {"қ": "ғ", "к": "г", "п": "б"}
 UNVOICED = "[^" + "".join(sorted(VOICING)) + "]"
 
 
+# Morphemes whose vowels ignore harmony — the instrumental and possessive-of
+# families. Defined here because the splitter must not cut inside one.
+INVARIANT = re.compile("(мен|бен|пен|менен|бенен|пенен|нікі|дікі|тікі)")
+
+
 def split_first(residue: str, inventory: set[str]) -> tuple[str, str] | None:
     """Cut after the longest opening morpheme that leaves a segmentable tail.
 
@@ -141,7 +147,15 @@ def split_first(residue: str, inventory: set[str]) -> tuple[str, str] | None:
     longer one puts more of the chain in level one, where it is checked against
     the stem, and leaves less to the tail, where it is not.
     """
+    # A cut must not land inside an invariant morpheme: longest-first read
+    # `ымен` as `ым`+`ен`, splitting the instrumental in half — and the front
+    # half `ен` then rightly failed the harmony sweep on back groups, taking
+    # `адамымен` with it. The right cut is `ы`+`мен`.
+    forbidden = {i for m in INVARIANT.finditer(residue)
+                 for i in range(m.start() + 1, m.end())}
     for k in range(min(len(residue), 6), 0, -1):
+        if k in forbidden:
+            continue
         head = residue[:k]
         if head in inventory and _segmentable(residue[k:], inventory):
             return head, residue[k:]
@@ -237,9 +251,15 @@ MIN_BIGRAM = 3
 
 
 def harmony_of(morpheme: str) -> str | None:
-    """Which harmony a morpheme commits to, or None if it takes either."""
+    """Which harmony a morpheme commits to, or None if it takes either.
+
+    `у` must not count: it is the infinitive marker and carries no harmony of
+    its own, exactly as `kkphon` treats it. Counting it as back read the chain
+    `уде` as back-committed, which walked its front tail `де` straight through
+    the harmony gate into every back group — `айдауде` for `айдауда`.
+    """
     for ch in morpheme:
-        if ch in "аоуұы":
+        if ch in "аоұы":
             return "b"
         if ch in "әеөүі":
             return "f"
@@ -374,8 +394,68 @@ def graft(level2, level1, chains, inventory):
     return added
 
 
-def build(rows, inventory, chains):
+BACK_V, FRONT_V = frozenset("аоұы"), frozenset("әеөүі")
+
+
+def clashes(cls: str, residue: str) -> bool:
+    """A residue whose vowels contradict its class's harmony.
+
+    The class already states the stem's harmony, so `-лық` has no business on
+    `nfv` — yet the miner put it there 66 times, from misanalysed stems and
+    from loanwords before their harmony override existed. Each such residue
+    licenses the wrong form for every stem in the class, multiplying a few bad
+    analyses into hundreds of accepted non-words: `азаматсіз`, `абадің`. Stems
+    that genuinely mix are per-stem overrides in data/harmony.tsv, not
+    class-wide rules.
+    """
+    vowels = {c for c in INVARIANT.sub("", residue) if c in BACK_V | FRONT_V}
+    if not vowels:
+        return False
+    if not vowels - FRONT_V:
+        return cls[1] != "f"
+    if not vowels - BACK_V:
+        return cls[1] != "b"
+    return False
+
+
+# The н-series cases exist only after a third-person possessive, and after one
+# they are the only cases: `баласында` but `абақтыда`, `айтқанына` but never
+# `айтқаныға`. The miner learned both errors from corpus noise and padded
+# headwords, and each residue then licenses the mistake for a whole class.
+POSS3 = ("лары", "лері", "дары", "дері", "тары", "тері", "сы", "сі", "ы", "і")
+PLAIN_CASES = ("ға", "ге", "қа", "ке", "да", "де", "та", "те",
+               "дан", "ден", "тан", "тен", "ды", "ді", "ты", "ті")
+N_SERIES = ("нда", "нде", "нан", "нен", "на", "не")
+
+
+def n_series_violation(cls: str, residue: str) -> bool:
+    for poss in POSS3:
+        if residue.startswith(poss):
+            rest = residue[len(poss):]
+            if rest.startswith(PLAIN_CASES):
+                return True                      # possessive + plain case
+            break
+    # A nasal-final stem takes `-нан/-нен` as its plain ablative — `саннан`,
+    # `күннен` — so on those classes the bare opener is not a violation. And on
+    # a verb an opening `н` is the reflexive voice, not a case at all:
+    # `сөйле+н+етін`. The bare-opener rule is a fact about nouns only.
+    if cls[0] != "n":
+        return False
+    if cls[2] == "n" and residue.startswith(("нан", "нен")):
+        return False
+    return residue.startswith(N_SERIES)          # n-series with no possessive
+
+
+def build(rows, inventory, chains, pinned=frozenset()):
     """(class → its level-one rules, continuation group → its level-two rules)."""
+    dropped_clash = sum(1 for cls, _s, res, _c in rows if clashes(cls, res))
+    rows = [r for r in rows if not clashes(r[0], r[2])]
+    dropped_n = sum(1 for _cls, _s, res, _c in rows if n_series_violation(_cls, res))
+    rows = [r for r in rows if not n_series_violation(r[0], r[2])]
+    print(f"{dropped_clash:,} residues dropped for clashing with their "
+          f"class's harmony, {dropped_n:,} for misplacing the н-series cases",
+          file=sys.stderr)
+
     def cont_key(cls: str, s1: str) -> tuple[str, str, str]:
         """What a level-two group is keyed on: track, harmony, opening morpheme.
 
@@ -413,6 +493,9 @@ def build(rows, inventory, chains):
     for cls, s1, _tail, count in split_rows:
         opening[cls, s1] += count
     keep_opening = winners(opening, lambda s1: sibling_key(s1[1]))
+    keep_opening |= {(cls, s1) for cls, s1, _tail, _c in split_rows
+                     if (cls, s1[0], (s1[1] + _tail)) in pinned or
+                        (cls, s1[0], s1[1] + _tail) in pinned}
 
     # The tail is voted on the same way, in the context of the morpheme it
     # follows. `-ның` after `-лар` and `-дың` after `-лар` cannot both be
@@ -422,6 +505,8 @@ def build(rows, inventory, chains):
         if tail and (cls, s1) in keep_opening:
             following[cont_key(cls, s1), tail] += count
     keep_tail = winners(following, lambda tail: sibling_key(opening_morpheme(tail)))
+    keep_tail |= {(cont_key(cls, s1), tail) for cls, s1, tail, _c in split_rows
+                  if tail and (cls, s1[0], s1[1] + tail) in pinned}
 
     level1 = collections.defaultdict(dict)   # class -> {s1: continuation key or None}
     level2 = collections.defaultdict(set)    # (harmony, s1) -> {tails}
@@ -441,6 +526,19 @@ def build(rows, inventory, chains):
             level2[key].add(tail)
     grafted = graft(level2, level1, chains, inventory)
     composed = compose(level2, inventory)
+    # The same two grammar checks again, on the assembled level-two tails:
+    # composition and grafting add tails the row filters never saw, and a tail
+    # answers to its group — its harmony to the group's harmony, and what may
+    # follow a possessive opener to the н-series rule.
+    swept = 0
+    for (track, group_harmony, (_strip, opener)), tails in level2.items():
+        doomed = {t for t in tails if clashes(track + group_harmony, t)}
+        if opener in POSS3:
+            doomed |= {t for t in tails if t.startswith(PLAIN_CASES)}
+        tails -= doomed
+        swept += len(doomed)
+    print(f"{swept:,} level-two tails swept by the same checks", file=sys.stderr)
+
     return level1, level2, elisions, unsplit, rejected, composed, grafted
 
 
@@ -499,10 +597,21 @@ def main() -> int:
     ap.add_argument("--kazsearch", type=Path, default=DEFAULT_KAZSEARCH)
     args = ap.parse_args()
 
-    rows = [row for path in args.residues if path.exists()
-            for row in read_residues(path)]
+    rows, pinned = [], set()
+    for path in args.residues:
+        if not path.exists():
+            continue
+        for row in read_residues(path):
+            rows.append(row)
+            # The paradigm files are generated from the allomorph rules, not
+            # mined from text: they are grammar, and grammar does not lose a
+            # vote to corpus frequency. The reflexive opener `не` on `сөйле`
+            # was outvoted by its лдтн-siblings and took two paradigm cells
+            # with it.
+            if "paradigm" in path.name:
+                pinned.add((row[0], row[1], row[2]))
     level1, level2, elisions, unsplit, rejected, composed, grafted = build(
-        rows, morphemes(args.kazsearch), read_chains(args.chains))
+        rows, morphemes(args.kazsearch), read_chains(args.chains), pinned)
     text = render(level1, level2, elisions)
 
     n1 = sum(len(v) for v in level1.values())

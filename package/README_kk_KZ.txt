@@ -18,7 +18,7 @@ WHAT IS IN IT
 PLEASE READ THIS BEFORE RELYING ON IT
 
 This is a first release and it has not been used in anger. Against a test set
-of 50,000 deliberately malformed words it wrongly accepts 5.5%, where the 2009
+of 50,000 deliberately malformed words it wrongly accepts 2.8%, where the 2009
 release accepts 1.8% — the price of reaching three times as many real forms.
 In practice that means it will occasionally fail to underline a misspelling.
 If that matters more to you than false underlining, the older dictionary is
@@ -67,7 +67,7 @@ _______________________________________________________________
 ЕСКЕРТУ
 
 Бұл — алғашқы нұсқа, әлі нақты жұмыста қолданылған жоқ. Әдейі бұрмаланған
-50 000 сөзден тұратын тексеру жиынында ол 5,5% қате сөзді дұрыс деп таниды
+50 000 сөзден тұратын тексеру жиынында ол 2,8% қате сөзді дұрыс деп таниды
 (2009 жылғы нұсқада — 1,8%). Яғни кейде қатені белгілемей кетуі мүмкін.
 
 Күрделі сөздер мен латын әліпбиі әзірше қолданылмайды.
