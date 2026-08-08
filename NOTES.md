@@ -198,6 +198,33 @@ Feeding the grid back in as authoritative residues took completeness from 83.9%
 to 100%, with no cost in false accepts. Against the same grid TLemur is at
 90.5% and the 2009 release at 28.0%.
 
+### The verbal grid, and validating without a reference
+
+The verbal grid is the larger of the two and had never been looked at: 80.9%
+before testing, 100% after. It also moved running text — 97.8% to 97.9% by
+token, 94.5% to 94.7% by type — and false accepts fell from 5.8% to 5.7%,
+because a paradigm that reaches the right form stops needing a loose rule that
+also reaches wrong ones.
+
+TLemur's tests are nouns and adjectives only, so there was no hand-written list
+to check the verb generator against. Attestation stood in for it: a generated
+form that a million words of KazNERD never contains is more likely the
+generator's mistake than a gap in the language. It found three.
+
+The present is the one tense whose third person is not bare — `келеді`,
+`айтады` — where the past, perfect, conditional and future all end at the tense
+stem. A stem-final `ы` is lost before `-у`, so `оқы` gives `оқу` and `оқушы`,
+not `оқыу`. And the negative aorist is `-с`, not the `-р` of the positive:
+`оқымас`, `келмес`, never `оқымар`.
+
+The first run against the dictionary then reported four more failures on `тап`,
+and those were the generator's too: `тап` is irregular, giving `тауып` before a
+vowel and `табу` in the infinitive. A grid of regular stems should not be asked
+to predict it. That is now the third time a paradigm test has blamed the
+dictionary for its own generator's errors, which is worth stating plainly: a
+generated test is only as good as its generator, and every one of these was
+found by checking against something the generator had no hand in.
+
 ## Compounding was measured and not enabled
 
 Kazakh compounds are overwhelmingly lexicalised — written solid, listed in
@@ -254,9 +281,9 @@ Unclear what ceiling is meaningful: the residual reduces to 36,918 distinct
 stems at 1.22 forms per stem, so there is no small set of additions that moves
 it much.
 
-**Paradigm completeness, currently 100%** on sixteen stems, one per
-phonological class. Cheap to extend: the verbal grid is not covered at all, and
-it is much the larger of the two.
+**Paradigm completeness, currently 100%** on both grids — 1,728 nominal forms
+over sixteen stems, 910 verbal over ten. What is not covered is derivation, and
+the voice suffixes (`-ыл`, `-ыс`, `-дыр`) which multiply the verbal grid again.
 
 **Suggestion quality, currently unmeasured.** No harness exists, no baseline
 exists, and no comparison dictionary publishes one either. Whatever is measured

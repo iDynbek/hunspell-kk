@@ -400,7 +400,11 @@ def build(rows, inventory, chains):
             continue
         cut = split_first(residue, inventory)
         if cut is None:
+            # No morpheme boundary the layer model recognises — `имын` on a
+            # stem that lost its vowel. Carry it whole rather than lose it:
+            # one atomic level-one rule with nothing after it.
             unsplit.append((cls, residue))
+            split_rows.append((cls, (strip, residue), "", count))
         else:
             split_rows.append((cls, (strip, cut[0]), cut[1], count))
 
@@ -453,7 +457,10 @@ def render(level1, level2, elisions) -> str:
         out.append(f"\nSFX {flag} N {len(rules)}")
         for strip, s1 in sorted(rules):
             key = rules[strip, s1]
-            body = (VOICING[strip] + s1) if strip else s1
+            # A strip is usually a stop that voices, so the voiced counterpart
+            # leads the append. It can also be the `ы` that `оқы` loses before
+            # the glide, in which case the residue already carries everything.
+            body = (VOICING[strip] + s1) if strip in VOICING else s1
             append = f"{body}/{cont_flag[key]}" if key else body
             # A plain rule for a suffix that is also known to voice has to be
             # kept off the three letters that voice, or the same suffix reaches
@@ -485,7 +492,8 @@ def main() -> int:
     ap.add_argument("--check", type=Path, help="exit non-zero if this file is stale")
     ap.add_argument("--residues", type=Path, nargs="+",
                     default=[ROOT / "data/residues.tsv",
-                             ROOT / "data/paradigm.tsv"])
+                             ROOT / "data/paradigm.tsv",
+                             ROOT / "data/verb_paradigm.tsv"])
     ap.add_argument("--chains", type=Path, default=ROOT / "data/chains.tsv")
     ap.add_argument("--kazsearch", type=Path, default=DEFAULT_KAZSEARCH)
     args = ap.parse_args()

@@ -71,6 +71,8 @@ residues: tests/corpus_cyr.txt
 paradigm:
 	$(PY) tools/paradigm.py --write tests/paradigms.tsv \
 		--residues data/paradigm.tsv dict/kk_KZ
+	$(PY) tools/verb_paradigm.py --write tests/verb_paradigms.tsv \
+		--residues data/verb_paradigm.tsv dict/kk_KZ
 
 harmony: tests/corpus_cyr.txt
 	$(PY) tools/mine_harmony.py --kazsearch $(KAZSEARCH) --kaznerd $(KAZNERD) \

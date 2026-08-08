@@ -6,8 +6,8 @@ locative. A spelling dictionary therefore stands or falls on its affix rules,
 and the one that has been in circulation since 2009 allows a word exactly one
 suffix. This one allows the chains the language actually uses.
 
-On a million words of real Kazakh news prose it accepts 97.8%, flagging about
-one word in 45. The 2009 release accepts 82.1%, flagging about one in 5.5.
+On a million words of real Kazakh news prose it accepts 97.9%, flagging about
+one word in 47. The 2009 release accepts 82.1%, flagging about one in 5.5.
 
 WHAT IS IN IT
 
@@ -18,7 +18,7 @@ WHAT IS IN IT
 PLEASE READ THIS BEFORE RELYING ON IT
 
 This is a first release and it has not been used in anger. Against a test set
-of 50,000 deliberately malformed words it wrongly accepts 5.8%, where the 2009
+of 50,000 deliberately malformed words it wrongly accepts 5.7%, where the 2009
 release accepts 1.8% — the price of reaching three times as many real forms.
 In practice that means it will occasionally fail to underline a misspelling.
 If that matters more to you than false underlining, the older dictionary is
@@ -60,14 +60,14 @@ _______________________________________________________________
 бір-ақ жалғау жалғай алады. Бұл сөздік тілде нақты кездесетін жалғау
 тізбектерін таниды.
 
-Бір миллион сөзден тұратын нақты қазақ мәтінінде бұл сөздік 97,8% сөзді
-таниды, яғни әрбір 45-ші сөзді ғана белгілейді. 2009 жылғы нұсқа — 82,1%,
+Бір миллион сөзден тұратын нақты қазақ мәтінінде бұл сөздік 97,9% сөзді
+таниды, яғни әрбір 47-ші сөзді ғана белгілейді. 2009 жылғы нұсқа — 82,1%,
 әрбір 5-6 сөздің бірін белгілейді.
 
 ЕСКЕРТУ
 
 Бұл — алғашқы нұсқа, әлі нақты жұмыста қолданылған жоқ. Әдейі бұрмаланған
-50 000 сөзден тұратын тексеру жиынында ол 5,8% қате сөзді дұрыс деп таниды
+50 000 сөзден тұратын тексеру жиынында ол 5,7% қате сөзді дұрыс деп таниды
 (2009 жылғы нұсқада — 1,8%). Яғни кейде қатені белгілемей кетуі мүмкін.
 
 Күрделі сөздер мен латын әліпбиі әзірше қолданылмайды.
