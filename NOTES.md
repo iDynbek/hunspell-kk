@@ -407,6 +407,42 @@ What remains of the catch gap to Apertium (95.8 against 98.7) is the price of
 our larger lexicon: more accepted strings means more places for a typo to
 land, and the residual is structural, not another audit away.
 
+## Wild text: the FinePDFs check
+
+FinePDFs' `kaz_Cyrl` split — 88,596 PDF documents mined by docling and rolmOCR
+from Common Crawl — is text nothing in this pipeline ever saw: certificates,
+gazettes, scanned forms. Sampled 1,500 documents, 1.47M Cyrillic tokens:
+
+| | tokens accepted |
+|---|---|
+| this, on KazNERD news | 96.8% |
+| this, on wild PDFs | 80.1% |
+| — docling extractions only | 86.6% |
+| — rolmOCR extractions only | 71.5% |
+| 2009 release, wild PDFs | 63.2% |
+
+The 19.9% flagged decomposes, and most of it is the dictionary doing its job:
+
+| share of flagged | what it is |
+|---|---|
+| 46.8% | Russian — untranslated passages in bilingual official documents |
+| 22.9% | mixed: real vocabulary gap and heavier damage (`аайналдыруға`) |
+| 13.1% | OCR-flattened Kazakh, provably one letter off (`Ікімат`, `Істін`) |
+| 12.7% | capitalised, much of it OCR glyph confusion — `Ѓылыми`, `Єріптік`, `Ѕзамады` read Kazakh Ғ/Ә/Ұ as Slavic Ѓ/Є/Ѕ |
+| 4.4% | one–two-letter fragments |
+
+Excluding the Russian and the provable corruption, the genuine miss rate on
+wild Kazakh is bounded by the "other" bucket: about 4.6% of all text, in the
+same range as the 3.2% on news — the dictionary holds up; the flag rate
+measures the documents.
+
+Two side-findings worth keeping. The 15-point gap between extractors makes a
+Kazakh dictionary's flag rate a serviceable OCR-quality metric — FinePDFs'
+own `ocr_quality_scores` column was empty in every row sampled. And OCR
+produces a confusion family spelling normalisation never anticipated: Kazakh
+Ғ/Ә/Ұ/Һ rendered as the Slavic homoglyphs Ѓ/Є/Ѕ/Ћ, which no keyboard produces
+and no REP table currently repairs.
+
 ## Candidate targets
 
 Numbers that could serve as targets, with what is known about each.
