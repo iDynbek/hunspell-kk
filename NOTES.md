@@ -92,9 +92,9 @@ on the historical scope, from one dictionary against one build of one corpus.
 
 Numbers that could serve as targets, with what is known about each.
 
-**False accepts, currently 6.8%.** The 2009 release is at 2.1%, and that is the
+**False accepts, currently 5.9%.** The 2009 release is at 1.8%, and that is the
 only external reference point available — it is not a standard, just the thing
-being replaced. Reaching 2.1% *and* keeping recall would be the strongest
+being replaced. Reaching 1.8% *and* keeping recall would be the strongest
 possible result; nothing establishes it is achievable. This number is also the
 one most likely to matter to a user, since a false accept is a silent failure
 where a false reject is a visible one.
@@ -148,6 +148,28 @@ Neither has been run here.
 A language model cannot be part of a shipped dictionary — Hunspell reads static
 files — so any model can only act offline, filtering candidate wordlists or
 tagging entries.
+
+## The false-accept number needs reading carefully
+
+It is 5.9% here against the 2009 release's 1.8%, and the increase is real: more
+affix rules mean more strings accepted, and some of the extra strings are
+wrong. But two things distort a naive comparison in opposite directions.
+
+The baseline's figure is partly ignorance rather than precision — it rejects
+corruptions of words it does not know, and it does not know 70% of modern
+Kazakh. Restricted to pairs where each dictionary knows the *original* word,
+the rates are 2.9% and 7.7%: the gap narrows and the increase survives.
+
+The other distortion was in the test. `-сың` and `-сыз` are second person
+familiar and second person polite, distinct morphemes, and `negatives.py` had
+them as one allomorph family — so `ойнайсың` → `ойнайсыз` counted as a
+misspelling when it is a different and perfectly good word. That penalises a
+dictionary in proportion to how much of the language it can generate, which is
+backwards. It was 18% of the reported rate.
+
+The lesson generalises past this instance: a negative test built by corrupting
+real text has to be sure the corruption is not itself a word, and "these two
+suffixes rhyme" is not sufficient grounds for believing it.
 
 ## Two things that turned out to be traps
 

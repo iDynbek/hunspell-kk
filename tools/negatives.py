@@ -21,32 +21,44 @@ import argparse
 import sys
 from pathlib import Path
 
-# Suffix families: one row is the same morpheme in every shape it takes. The
-# columns are (back-harmony, front-harmony) and the rows within a family differ
-# only in the initial consonant the stem selects. Swapping along either axis
-# produces a form the phonology rules out.
+# Suffix families. Columns are (back-harmony, front-harmony), and swapping
+# those is always an error: one morpheme cannot wear the wrong harmony.
+#
+# Whether the *rows* may be swapped is a different question, and getting it
+# wrong makes the whole measurement lie. Where `shapes` is true the rows are one
+# morpheme in the shapes its stem selects — `-лар`, `-дар`, `-тар` are the
+# plural, and only one is right — so crossing them is an error too. Where it is
+# false the rows are distinct morphemes that merely rhyme: `-сың` is second
+# person familiar and `-сыз` second person polite, so `ойнайсың` → `ойнайсыз`
+# is not a misspelling, it is a different and perfectly good word.
+#
+# Crossing them anyway penalises a dictionary exactly in proportion to how much
+# of the language it can generate, which inverts what this is for. It cost
+# 18% of the false-accept rate reported before this was noticed.
 FAMILIES = [
-    [("лар", "лер"), ("дар", "дер"), ("тар", "тер")],           # plural
-    [("да", "де"), ("та", "те"), ("нда", "нде")],               # locative
-    [("дан", "ден"), ("тан", "тен"), ("нан", "нен")],           # ablative
-    [("ға", "ге"), ("қа", "ке"), ("на", "не")],                 # dative
-    [("ды", "ді"), ("ты", "ті"), ("ны", "ні")],                 # accusative
-    [("дың", "дің"), ("тың", "тің"), ("ның", "нің")],           # genitive
-    [("мыз", "міз"), ("ңыз", "ңіз")],                           # possessive
-    [("сың", "сің"), ("сыз", "сіз"), ("мын", "мін")],           # predicative
+    (True,  [("лар", "лер"), ("дар", "дер"), ("тар", "тер")]),   # plural
+    (True,  [("да", "де"), ("та", "те"), ("нда", "нде")]),       # locative
+    (True,  [("дан", "ден"), ("тан", "тен"), ("нан", "нен")]),   # ablative
+    (True,  [("ға", "ге"), ("қа", "ке"), ("на", "не")]),         # dative
+    (True,  [("ды", "ді"), ("ты", "ті"), ("ны", "ні")]),         # accusative
+    (True,  [("дың", "дің"), ("тың", "тің"), ("ның", "нің")]),   # genitive
+    (False, [("мыз", "міз"), ("ңыз", "ңіз")]),                   # 1pl vs 2pl polite
+    (False, [("сың", "сің"), ("сыз", "сіз"), ("мын", "мін")]),   # you / you / I
 ]
 
 
 def swaps(word: str) -> list[str]:
     """Every one-suffix corruption of `word`, harmony and allomorph both."""
     out = []
-    for family in FAMILIES:
+    for shapes, family in FAMILIES:
         for row, (back, front) in enumerate(family):
             for col, form in enumerate((back, front)):
                 if not word.endswith(form) or len(word) <= len(form) + 1:
                     continue
                 stem = word[: -len(form)]
                 for r, pair in enumerate(family):
+                    if r != row and not shapes:
+                        continue
                     for c, other in enumerate(pair):
                         if (r, c) != (row, col):
                             out.append(stem + other)

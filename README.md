@@ -7,7 +7,7 @@
 
 483,752 / 11,461 / 30,256 word forms from kazdict, by the scope of the edition
 each came from, plus 50,000 constructed non-words of which the 2009 release
-accepts 2.1% and this one 6.8%. hunspell 1.7.3. `make scoped` reproduces it.
+accepts 1.8% and this one 5.9%. hunspell 1.7.3. `make scoped` reproduces it.
 
 The three columns are reported apart because the sources are not all about the
 same language, and a spellchecker for modern Kazakh *should* reject much of the
@@ -239,8 +239,8 @@ definitions barely at all.
 `make dist` builds `dist/kk_KZ.oxt`, a LibreOffice extension. For plain
 Hunspell, `dict/kk_KZ.aff` and `dict/kk_KZ.dic` are the pair.
 
-It is a first release and has not been used in anger. It accepts 6.8% of a
-50,000-word set of deliberate misspellings where the 2009 release accepts 2.1%
+It is a first release and has not been used in anger. It accepts 5.9% of a
+50,000-word set of deliberate misspellings where the 2009 release accepts 1.8%
 — the price of reaching three times as many real forms — so it will sometimes
 fail to underline a mistake. Compounds and the Latin alphabet are not handled.
 
