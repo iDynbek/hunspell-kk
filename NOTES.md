@@ -569,7 +569,7 @@ test stems filled the gap: `өткізіледі`, nine tokens in one document.
 `й`-final verbs, kept only where Apertium gives a clean analysis, 193 in all.
 
 The verbal grid is now 12,470 forms at 100%, and running-text coverage rose to
-98.0% by token, 95.0% by type, with false accepts unmoved at 2.4%. What is left
+98.1% by token, 95.3% by type, with false accepts unmoved at 2.4%. What is left
 on the Constitution is the file's own legacy-font corruption and a handful of
 rare loanwords (`консультативтік`, `квазимемлекеттік`) that Apertium does not
 carry either.
@@ -588,6 +588,17 @@ conditional (`айтшы`, `айтыңызшы`, `десеңізші`), and the 
 that have a representative stem; the three that rely on the all-class residue
 append (back-`р`, back/front-`н`) still miss them — `барсаңшы` is the visible
 case.
+
+**`и`-final nouns are glide-final, not vowel-final.** `у`, `ю` and `й` were
+already in the sonorant final class (`су` → `суы`, not `*сусы`), but `и` was
+left as a plain vowel, so и-final nouns took the vowel allomorphs — `*мисы`,
+`*таксиnің` — where the language uses the consonant ones: `миы`, `таксидің`,
+`сәбиі`, `Әлидің`. Moving `и` into that class fixes every и-final noun and name
+at once. It changes only which flag `gen_dic` writes — the `.aff` is
+byte-identical, since it is keyed on the class names, not their membership — and
+it turned out to *lower* false accepts (the vowel forms it stops generating were
+never words). The и-final verbs already carry a per-stem harmony override, so
+they were unaffected. This recovered another ~600 forms on the corpus.
 
 ## Candidate targets
 

@@ -20,15 +20,16 @@ see.
 
 from __future__ import annotations
 
-# Orthographic vowels. `у` and `ю` are also consonantal, which is why they get
-# their own final class below rather than counting as vowel-final.
+# Orthographic vowels. `у`, `ю` and `и` are also consonantal, which is why they
+# get their own final class below rather than counting as vowel-final.
 BACK_VOWELS = frozenset("аоуұыэ")
 FRONT_VOWELS = frozenset("әеёиөүіюя")
 VOWELS = BACK_VOWELS | FRONT_VOWELS
 
 # Final-segment classes, named for the plural allomorph each one selects.
 FINAL_V = "v"   # a vowel                        бала  → балалар, баланың
-FINAL_R = "r"   # й р у ю                        бай   → байлар,  байдың
+FINAL_R = "r"   # й р у ю и                      бай   → байлар,  байдың
+                #                                 такси → таксилер, таксидің
 FINAL_Z = "z"   # ж з л                          жол   → жолдар,  жолдың
 FINAL_N = "n"   # м н ң                          адам  → адамдар, адамның
 FINAL_T = "t"   # any voiceless consonant        мектеп → мектептер, мектептің
@@ -38,7 +39,7 @@ FINAL_T = "t"   # any voiceless consonant        мектеп → мектепт
 # class cannot serve both suffixes, and merging them is what let `адалның`
 # through.
 FINAL_CONSONANTS = {
-    FINAL_R: frozenset("йрую"),
+    FINAL_R: frozenset("йруюи"),
     FINAL_Z: frozenset("жзл"),
     FINAL_N: frozenset("мнң"),
     FINAL_T: frozenset("бвгғдкқпстфхһцчшщ"),
