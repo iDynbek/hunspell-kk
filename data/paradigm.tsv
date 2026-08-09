@@ -1,4 +1,5 @@
 # class	strip	residue	count — from tools/paradigm.py
+nbn	0	быз	60
 nbn	0	да	60
 nbn	0	дар	60
 nbn	0	дарда	60
@@ -241,6 +242,8 @@ nbt	0	мыз	60
 nbt	0	мын	60
 nbt	0	пен	60
 nbt	0	пенен	60
+nbt	0	пыз	60
+nbt	0	пын	60
 nbt	0	сыз	60
 nbt	0	сыздар	60
 nbt	0	сың	60
@@ -476,6 +479,8 @@ nbv	0	ңыздың	60
 nbv	0	ңызға	60
 nbz	0	бен	60
 nbz	0	бенен	60
+nbz	0	быз	60
+nbz	0	бын	60
 nbz	0	да	60
 nbz	0	дан	60
 nbz	0	дар	60
@@ -595,6 +600,7 @@ nbz	0	ыңызды	60
 nbz	0	ыңыздың	60
 nbz	0	ыңызға	60
 nbz	0	ға	60
+nfn	0	біз	60
 nfn	0	ге	60
 nfn	0	де	60
 nfn	0	дегі	60
@@ -838,6 +844,8 @@ nft	0	міз	60
 nft	0	мін	60
 nft	0	пен	60
 nft	0	пенен	60
+nft	0	піз	60
+nft	0	пін	60
 nft	0	сіз	60
 nft	0	сіздер	60
 nft	0	сің	60
@@ -1117,6 +1125,8 @@ nfv	0	ңізді	60
 nfv	0	ңіздің	60
 nfz	0	бен	60
 nfz	0	бенен	60
+nfz	0	біз	60
+nfz	0	бін	60
 nfz	0	ге	60
 nfz	0	де	60
 nfz	0	дегі	60

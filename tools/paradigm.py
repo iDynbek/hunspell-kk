@@ -121,9 +121,25 @@ def cases(stem: str, after_third: bool) -> dict[str, str]:
 SHORT_DATIVE = ("1sg", "2sg")
 
 # Predicative endings — `алмамын`, "I am an apple". They attach to the
-# nominative and are what makes a Kazakh noun able to stand as a sentence.
-PREDICATIVE = (("мын", "мін"), ("сың", "сің"), ("сыз", "сіз"),
-               ("мыз", "міз"), ("сыңдар", "сіңдер"), ("сыздар", "сіздер"))
+# nominative and are what makes a Kazakh noun able to stand as a sentence. The
+# first-person consonant is `-п` after a voiceless stop, `-б` after a voiced
+# obstruent, `-м` otherwise — `азатпын`, `сөзбін`, `адаммын`. The plural agrees
+# except that the nasals join the `-б` set: `адамбыз`, not `*адаммыз`, though
+# the singular is `адаммын`. Getting this wrong is what left `азатпыз`, `ақпыз`,
+# `аманбыз` — every adjective predicated in the first person plural — rejected.
+VOICELESS_STOP = frozenset("кқпстфхһцчшщ")
+VOICED_OBSTRUENT = frozenset("бвгғдджз")
+NASAL = frozenset("мнң")
+
+
+def predicative(base: str) -> list[tuple[str, str, str]]:
+    last = base[-1]
+    sg = "п" if last in VOICELESS_STOP else "б" if last in VOICED_OBSTRUENT else "м"
+    pl = ("п" if last in VOICELESS_STOP
+          else "б" if last in VOICED_OBSTRUENT | NASAL else "м")
+    return [("1sg", sg + "ын", sg + "ін"), ("2sg", "сың", "сің"),
+            ("2pol", "сыз", "сіз"), ("1pl", pl + "ыз", pl + "із"),
+            ("2pl", "сыңдар", "сіңдер"), ("2polpl", "сыздар", "сіздер")]
 
 
 def paradigm(stem: str) -> list[tuple[str, str]]:
@@ -142,8 +158,8 @@ def paradigm(stem: str) -> list[tuple[str, str]]:
             # the apple". It is regular and very common, so the grid covers it.
             out.append((f"{number}.{poss or '-'}.loc.adj",
                         join(word, grid["loc"]) + pick("ғы", "гі", word)))
-        for back, front in PREDICATIVE:
-            out.append((f"{number}.pred", join(base, pick(back, front, base))))
+        for name, back, front in predicative(base):
+            out.append((f"{number}.pred.{name}", join(base, pick(back, front, base))))
     return out
 
 

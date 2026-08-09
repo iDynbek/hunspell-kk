@@ -347,6 +347,22 @@ def inferential(base: str) -> list[tuple[str, str]]:
             for name, back, front in full_person(converb) if back]
 
 
+# The habitual participle `-атын` predicated: `алатынбыз` "we (habitually) take",
+# `келетінмін`. The perfect participle already predicates through the perfect
+# tense (`алғанбыз`), but the habitual had no predicated form. It ends in `-н`,
+# so the first person plural is `-быз` like any nasal-final nominal, not the
+# `-мыз` the verb tenses take.
+HABITUAL_COP = (("1sg", "мын", "мін"), ("2sg", "сың", "сің"),
+                ("2pol", "сыз", "сіз"), ("1pl", "быз", "біз"),
+                ("2pl", "сыңдар", "сіңдер"), ("2polpl", "сыздар", "сіздер"))
+
+
+def habitual_predicative(base: str) -> list[tuple[str, str]]:
+    habitual = present_stem(base) + pick("тын", "тін", base)
+    return [(f"hcop.{name}", habitual + pick(b, f, base))
+            for name, b, f in HABITUAL_COP]
+
+
 def paradigm(stem: str) -> list[tuple[str, str]]:
     out: list[tuple[str, str]] = []
     for polarity, base in (("pos", stem), ("neg", stem + negation(stem))):
@@ -359,6 +375,7 @@ def paradigm(stem: str) -> list[tuple[str, str]]:
         out += [(f"{polarity}.{label}", word) for label, word in participles(base)]
         out += [(f"{polarity}.{label}", word) for label, word in desiderative(base)]
         out += [(f"{polarity}.{label}", word) for label, word in inferential(base)]
+        out += [(f"{polarity}.{label}", word) for label, word in habitual_predicative(base)]
     out += [(label, word) for label, word in imperatives(stem)]
     out += [(label, word) for label, word in softener(stem)]
     out += [(label, word) for label, word in intentive(stem)]
