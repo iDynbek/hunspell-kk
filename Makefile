@@ -167,6 +167,9 @@ dist-clean: aff
 dist-xpi: dict
 	@rm -rf dist/xpi && mkdir -p dist/xpi/dictionaries
 	cp package/xpi/manifest.json dist/xpi/
+	@V=$$(grep -oP '<version value="\K[^"]+' package/description.xml); \
+		sed -i "s/\"version\": \"[^\"]*\"/\"version\": \"$$V\"/" dist/xpi/manifest.json; \
+		echo "stamped xpi version $$V"
 	cp dict/kk_KZ.aff dist/xpi/dictionaries/kk-KZ.aff
 	cp dict/kk_KZ.dic dist/xpi/dictionaries/kk-KZ.dic
 	cd dist/xpi && zip -q -r ../kk_KZ.xpi . && cd ../..

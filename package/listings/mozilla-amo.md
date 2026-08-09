@@ -1,6 +1,6 @@
 # addons.mozilla.org listing (upload dist/kk_KZ.xpi as type Dictionary)
 
-**Name:** Qazaq Spellchecking Dictionary — Қазақша емле сөздігі
+**Name:** Kazakh Dictionary — Қазақша емле сөздігі
 **Summary (250 chars max):**
 Kazakh (kk) spelling dictionary. Accepts 98.1% of real Kazakh text where the
 2009 dictionary accepts 82%, with full inflection support. Қазақ тілінің емле
