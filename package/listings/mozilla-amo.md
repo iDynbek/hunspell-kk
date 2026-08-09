@@ -2,7 +2,7 @@
 
 **Name:** Qazaq Spellchecking Dictionary — Қазақша емле сөздігі
 **Summary (250 chars max):**
-Kazakh (kk) spelling dictionary. Accepts 97.9% of real Kazakh text where the
+Kazakh (kk) spelling dictionary. Accepts 98.1% of real Kazakh text where the
 2009 dictionary accepts 82%, with full inflection support. Қазақ тілінің емле
 тексеру сөздігі.
 
@@ -10,9 +10,11 @@ Kazakh (kk) spelling dictionary. Accepts 97.9% of real Kazakh text where the
 Kazakh is agglutinative — one word carries a chain of suffixes — and the
 Kazakh dictionary in circulation since 2009 allows only one suffix per word,
 so it underlines most correct text. This dictionary generates the chains the
-language actually uses: 97.9% of a million words of Kazakh news text accepted,
+language actually uses: 98.1% of a million words of Kazakh news text accepted,
 complete nominal and verbal inflection, and the proper names of Kazakhstan in
-their inflected forms.
+their inflected forms. Its suggestions correct both the Russian-for-Kazakh
+letter confusions (о for ө, н for ң) and the Latin look-alikes that legacy
+fonts and copied PDFs leave behind — үшiн with a Latin i is corrected to үшін.
 
 Made by an individual volunteer for the free use of the Kazakh language on the
 internet. GPL-3.0-or-later.
