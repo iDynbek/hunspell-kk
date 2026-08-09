@@ -568,8 +568,8 @@ test stems filled the gap: `өткізіледі`, nine tokens in one document.
 `data/extra_forms.txt` holds the forms — generated from eliding stems and
 `й`-final verbs, kept only where Apertium gives a clean analysis, 193 in all.
 
-The verbal grid is now 12,992 forms at 100%, and running-text coverage rose to
-98.1% by token, 95.3% by type, with false accepts unmoved at 2.4%. What is left
+The verbal grid is now 15,624 forms at 100%, and running-text coverage rose to
+98.1% by token, 95.4% by type, with false accepts unmoved at 2.4%. What is left
 on the Constitution is the file's own legacy-font corruption and a handful of
 rare loanwords (`консультативтік`, `квазимемлекеттік`) that Apertium does not
 carry either.
