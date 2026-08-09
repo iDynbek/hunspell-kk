@@ -1,12 +1,18 @@
 # stems that drop their last vowel, from tools/mine_residues.py
 арыз
+ауыз
+ауыл
 ашын
 ақын
 бұрын
+дауыс
 елегіз
+ерік
+ерін
 кезін
 кәріз
 кәсіпорын
+көңіл
 мойын
 мұрын
 ойын
