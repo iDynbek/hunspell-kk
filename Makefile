@@ -5,7 +5,7 @@ KAZDICT   ?= ../kazdict/data/build/kazdict.db
 KAZNLP    ?= ../kaznlp/kaznlp/morphology/mdl/sfx
 KAZNERD   ?= ../KazNERD/KazNERD
 
-.PHONY: help dict aff dic check data lexicon names names-wp paradigm paradigm-residues typos chains harmony audit epenthesis dist-xpi corpus residues prune negatives baseline measure scoped running dist clean
+.PHONY: help dict aff dic check data lexicon names names-wp paradigm paradigm-residues typos chains harmony audit audit-harmony epenthesis dist-xpi corpus residues prune negatives baseline measure scoped running dist clean
 
 help:
 	@echo "make dict      generate dict/kk_KZ.aff and dict/kk_KZ.dic"
@@ -99,6 +99,12 @@ audit:
 # needs the `apertium` distrobox.
 epenthesis:
 	$(PY) tools/epenthesis.py -o data/epenthesis.txt
+
+# Vowel-harmony overrides for loanwords apertium-kaz classifies differently from
+# kkphon (артиллерия is back, not front); needs the `apertium` distrobox. Merges
+# into data/harmony.tsv and never overrules a harmony KazNERD attests.
+audit-harmony:
+	$(PY) tools/audit_harmony.py --kaznerd $(KAZNERD) -o data/harmony.tsv
 
 harmony: tests/corpus_cyr.txt
 	$(PY) tools/mine_harmony.py --kazsearch $(KAZSEARCH) --kaznerd $(KAZNERD) \
