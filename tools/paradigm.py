@@ -84,7 +84,8 @@ def cases(stem: str, after_third: bool) -> dict[str, str]:
     if after_third:
         return {"gen": pick("ның", "нің", stem), "dat": pick("на", "не", stem),
                 "acc": pick("н", "н", stem), "loc": pick("нда", "нде", stem),
-                "abl": pick("нан", "нен", stem), "ins": pick("мен", "мен", stem)}
+                "abl": pick("нан", "нен", stem), "ins": pick("мен", "мен", stem),
+                "ins2": "менен"}
 
     if cls in (FINAL_V, FINAL_N):
         gen = pick("ның", "нің", stem)
@@ -107,7 +108,11 @@ def cases(stem: str, after_third: bool) -> dict[str, str]:
                          pick("тан", "тен", stem))
 
     ins = {FINAL_T: "пен"}.get(cls, "бен" if stem[-1:] in "жз" else "мен")
-    return {"gen": gen, "dat": dat, "acc": acc, "loc": loc, "abl": abl, "ins": ins}
+    # The emphatic instrumental `-менен`/`-пенен`/`-бенен`, the longer variant of
+    # `-мен` that is everywhere in literary and spoken Kazakh — `қолменен`,
+    # `сөзбенен`, `атпенен` — and harmony-invariant like `-мен` itself.
+    return {"gen": gen, "dat": dat, "acc": acc, "loc": loc, "abl": abl,
+            "ins": ins, "ins2": ins + "ен"}
 
 
 # The first and second person singular possessives take a bare `-а`/`-е` in

@@ -323,6 +323,20 @@ def softener(stem: str) -> list[tuple[str, str]]:
     return [(f"soft.{name}", base + emph) for name, base in bases]
 
 
+# The intentive `-мақ`/`-мек` — "plans to", "is going to": `бармақ`, `айтпақшы`,
+# `бармаққа`. The suffix voices like the negation (`-пақ` after a voiceless stop,
+# `-бақ` after ж/з, `-мақ` otherwise), then takes the predicative person set, the
+# emphatic `-шы`, and the dative. Common in narrative and news of intent, but the
+# residues did not carry it.
+def intentive(stem: str) -> list[tuple[str, str]]:
+    base = stem + negation(stem)[0] + pick("ақ", "ек", stem)
+    out = [(f"plan.{name}", base + pick(back, front, stem))
+           for name, back, front in full_person(base)]
+    out.append(("plan.soft", base + pick("шы", "ші", stem)))
+    out.append(("plan.dat", base + pick("қа", "ке", stem)))
+    return out
+
+
 def paradigm(stem: str) -> list[tuple[str, str]]:
     out: list[tuple[str, str]] = []
     for polarity, base in (("pos", stem), ("neg", stem + negation(stem))):
@@ -336,6 +350,7 @@ def paradigm(stem: str) -> list[tuple[str, str]]:
         out += [(f"{polarity}.{label}", word) for label, word in desiderative(base)]
     out += [(label, word) for label, word in imperatives(stem)]
     out += [(label, word) for label, word in softener(stem)]
+    out += [(label, word) for label, word in intentive(stem)]
     return out
 
 

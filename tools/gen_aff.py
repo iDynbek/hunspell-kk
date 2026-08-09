@@ -136,7 +136,11 @@ UNVOICED = "[^" + "".join(sorted(VOICING)) + "]"
 
 # Morphemes whose vowels ignore harmony — the instrumental and possessive-of
 # families. Defined here because the splitter must not cut inside one.
-INVARIANT = re.compile("(мен|бен|пен|менен|бенен|пенен|нікі|дікі|тікі)")
+# Longest-first: Python alternation is leftmost-first, so `менен` must precede
+# `мен`, or `INVARIANT.sub` strips only `мен` from `менен` and leaves `ен` to
+# fail the harmony sweep on back classes — dropping `қызбенен` while keeping
+# `сөзбенен`.
+INVARIANT = re.compile("(менен|бенен|пенен|мен|бен|пен|нікі|дікі|тікі)")
 
 
 def split_first(residue: str, inventory: set[str]) -> tuple[str, str] | None:
