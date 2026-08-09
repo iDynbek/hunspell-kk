@@ -289,6 +289,40 @@ def _front(back: str) -> str:
     return back.translate(str.maketrans("аоұығқ", "еөүігк"))
 
 
+# The desiderative `-ғы`/`-қы` is a "want to" participle that only ever appears
+# under a possessive: `айтқым (келеді)` "I want to say", `кеткісі бар` "wants to
+# leave". The suffix voices like the past — `-қы`/`-кі` after a voiceless stop,
+# `-ғы`/`-гі` otherwise — and the whole thing takes a possessive, positive and
+# negative alike (`айтпағым`). Pervasive in dialogue, so the news corpus was
+# thin on it; Apertium confirms the possessive forms but not a case on top.
+DESIDERATIVE_POSS = (("p1sg", "м", "м"), ("p2sg", "ң", "ң"),
+                     ("p2pol", "ңыз", "ңіз"), ("p3", "сы", "сі"),
+                     ("p1pl", "мыз", "міз"))
+
+
+def desiderative(base: str) -> list[tuple[str, str]]:
+    suffix = (pick("қы", "кі", base) if base[-1] in VOICELESS
+              else pick("ғы", "гі", base))
+    stem = base + suffix
+    return [(f"desid.{name}", stem + pick(back, front, base))
+            for name, back, front in DESIDERATIVE_POSS]
+
+
+# The softener `-шы`/`-ші` is an emphatic clitic on a request: `айтшы` "do say",
+# `айтыңызшы`, `айтсаңшы` "why don't you say". It attaches to the second-person
+# imperative and conditional, harmonising only, and like the desiderative it is a
+# dialogue form the news corpus barely carries.
+def softener(stem: str) -> list[tuple[str, str]]:
+    emph = pick("шы", "ші", stem)
+    imp = dict(imperatives(stem))
+    cond = stem + pick("са", "се", stem)
+    bases = (("2sg", stem),
+             ("2pol", imp["imp.2pol"]),
+             ("cond.2sg", cond + "ң"),
+             ("cond.2pol", cond + pick("ңыз", "ңіз", stem)))
+    return [(f"soft.{name}", base + emph) for name, base in bases]
+
+
 def paradigm(stem: str) -> list[tuple[str, str]]:
     out: list[tuple[str, str]] = []
     for polarity, base in (("pos", stem), ("neg", stem + negation(stem))):
@@ -299,7 +333,9 @@ def paradigm(stem: str) -> list[tuple[str, str]]:
         out += [(f"{polarity}.{label}", word) for label, word in nonfinite(base)]
         out += [(f"{polarity}.{label}", word) for label, word in verbal_noun(base)]
         out += [(f"{polarity}.{label}", word) for label, word in participles(base)]
+        out += [(f"{polarity}.{label}", word) for label, word in desiderative(base)]
     out += [(label, word) for label, word in imperatives(stem)]
+    out += [(label, word) for label, word in softener(stem)]
     return out
 
 

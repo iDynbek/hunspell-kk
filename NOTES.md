@@ -568,11 +568,26 @@ test stems filled the gap: `өткізіледі`, nine tokens in one document.
 `data/extra_forms.txt` holds the forms — generated from eliding stems and
 `й`-final verbs, kept only where Apertium gives a clean analysis, 193 in all.
 
-The verbal grid is now 11,658 forms at 100%, and running-text coverage rose to
-97.9% by token, 94.9% by type, with false accepts unmoved at 2.4%. What is left
+The verbal grid is now 12,470 forms at 100%, and running-text coverage rose to
+98.0% by token, 95.0% by type, with false accepts unmoved at 2.4%. What is left
 on the Constitution is the file's own legacy-font corruption and a handful of
 rare loanwords (`консультативтік`, `квазимемлекеттік`) that Apertium does not
 carry either.
+
+**Dialogue morphology, from literary text.** The residues were mined from news
+(KazNERD), which is thin on dialogue, first person and politeness. Measured
+against ~700 books from kitap.kz, acceptance is 96.6% by token — the 1.3-point
+gap from news is register, not vocabulary: of the forms Apertium confirmed as
+standard, *none* were missing words, all were missing inflections of known
+stems. Three closed, productive patterns account for most of it and are now
+generated: the desiderative `-ғы`/`-қы` under a possessive (`айтқым` "want to
+say", `кеткісі`), the emphatic softener `-шы`/`-ші` on imperative and
+conditional (`айтшы`, `айтыңызшы`, `десеңізші`), and the `и`-final verbs
+`kkphon` defaults to back but Apertium marks front (`ти`→`тиді` not `*тиды`;
+`жи` stays back). The desiderative and softener reach the seven verb classes
+that have a representative stem; the three that rely on the all-class residue
+append (back-`р`, back/front-`н`) still miss them — `барсаңшы` is the visible
+case.
 
 ## Candidate targets
 
