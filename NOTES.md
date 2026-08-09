@@ -600,6 +600,29 @@ it turned out to *lower* false accepts (the vowel forms it stops generating were
 never words). The и-final verbs already carry a per-stem harmony override, so
 they were unaffected. This recovered another ~600 forms on the corpus.
 
+## The JavaScript checkers split on architecture
+
+Tested for the wooorm/dictionaries submission (issue 97). The npm ecosystem has
+two kinds of "hunspell-compatible" checker, and this dictionary tells them
+apart.
+
+**hunspell-asm** (real Hunspell compiled to WASM) loads the full pair in about
+190 ms and matches native hunspell 1.7.3 exactly — accept, reject and
+suggestions, homoglyph corrections included. `nodehun` binds the same C++, so
+the pair works wherever actual Hunspell is behind the API.
+
+**nspell** (wooorm's pure-JS reimplementation, what retext-spell uses) parses
+everything correctly — `FLAG num`, the two-level continuation chains, 12/12
+deep inflections accepted on a subset — but it *eagerly expands* every affix
+form of every entry into one JS object at load. Kazakh expands at ~600 forms
+per entry (measured: 100 entries → 65k forms, 5,000 → 3.1M), so the full
+131k-entry dictionary is ~80M forms, past V8's property ceiling:
+`RangeError: Too many properties to enumerate`, at load, unconditionally.
+No data-side fix short of gutting coverage; any seriously agglutinative
+dictionary hits the same wall. Lazy stripping versus eager expansion is the
+whole difference between scaling in the rules and scaling in the wordlist —
+the same trade the 2009 dictionary made, rediscovered inside a JS library.
+
 ## Candidate targets
 
 Numbers that could serve as targets, with what is known about each.
