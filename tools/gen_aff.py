@@ -67,6 +67,10 @@ TRY аеқыңғұрстізөүлйбоюпшнмәһджхцвчфъьэё
 
 WORDCHARS -'’
 
+# The Kazakh ЙЦУКЕН keyboard, so an adjacent-key slip is a cheap edit for the
+# suggester. Row one is the Kazakh letters, which sit on the number row.
+KEY әіңғүұқөһ|йцукенгшщзхъ|фывапролджэ|ячсмитьбю
+
 # The pairs a Kazakh typist actually confuses: each letter Cyrillic added for
 # Kazakh against its nearest Russian neighbour, which is what a keyboard left
 # on the Russian layout produces.
@@ -80,9 +84,12 @@ MAP кқ
 MAP гғ
 MAP нң
 
-# Same substitutions as an edit the suggester can undo, in the direction the
-# mistake is made: the Russian letter was typed, the Kazakh one was meant.
-REP 8
+# Substitutions the suggester can undo, in the direction the mistake is made.
+# First the Russian-for-Kazakh letter, then — the commonest corruption in real
+# Kazakh text — Latin look-alikes: legacy fonts and OCR render Cyrillic with
+# same-shape Latin letters (`үшiн` with a Latin i, `тәуелсiздiгi`, the schwa `ə`
+# for `ә`), so each maps back to the Cyrillic that was meant.
+REP 33
 REP а ә
 REP о ө
 REP у ү
@@ -91,6 +98,31 @@ REP и і
 REP к қ
 REP г ғ
 REP н ң
+REP ы і
+REP і ы
+REP х һ
+REP ə ә
+REP a а
+REP c с
+REP e е
+REP i і
+REP o о
+REP p р
+REP x х
+REP y у
+REP k к
+REP A А
+REP B В
+REP C С
+REP E Е
+REP H Н
+REP K К
+REP M М
+REP O О
+REP P Р
+REP T Т
+REP X Х
+REP Y У
 
 # Productive compounding is deliberately not enabled; see NOTES.md. Restricted
 # to bound prefixes it reached about twenty more word types and admitted 108
