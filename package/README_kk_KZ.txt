@@ -1,5 +1,5 @@
 		Kazakh spelling dictionary for Hunspell
-		version 0.2.4
+		version 0.2.5
 
 INSTALLING IN LIBREOFFICE
 
@@ -20,7 +20,7 @@ accepts 82.1%, flagging about one in 5.5.
 
 WHAT IS IN IT
 
-  kk_KZ.dic   130,959 entries
+  kk_KZ.dic   131,289 entries
   kk_KZ.aff   8,096 affix rules, generated from a layered model of Kazakh
               morphology rather than written by hand
 
@@ -63,7 +63,7 @@ the Rust core of pg-kazsearch.
 _______________________________________________________________
 
 		Hunspell-ге арналған орфографиялық қазақ тілі сөздігі
-		0.2.4 нұсқасы
+		0.2.5 нұсқасы
 
 Қазақ тілі жалғамалы тіл: мектептерімізде сөзі мектеп түбіріне көптік, тәуелдік
 және жатыс жалғауларынан құралған. Сондықтан сөздіктің сапасы оның жалғау

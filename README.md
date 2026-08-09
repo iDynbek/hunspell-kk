@@ -22,7 +22,7 @@ the text of the Kazakh Constitution, **99.7%** of genuine words.
 | | entries | recall on modern Kazakh | false accepts |
 |---|---|---|---|
 | 2009 release | 54,063 | 30.1% | 1.8% |
-| this dictionary | 130,959 | **77.0%** | 2.4% |
+| this dictionary | 131,289 | **77.0%** | 2.4% |
 
 Recall is measured on ~484k word forms from the sozdikqor corpus; false accepts
 on 50,000 constructed non-words. The false-accept column is the price of

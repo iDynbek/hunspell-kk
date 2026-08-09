@@ -13,7 +13,7 @@ answers the same questions in the same syntax.
 |---|---|---|---|---|---|---|
 | Turkish | 75,909 | 59,266 | 59,266 | num | 2.2M | 35M |
 | Hungarian | 97,581 | 131 | 24,542 | char | 2.5M | 1.7M |
-| Kazakh (this) | 130,959 | 283 | 8,096 | num | 0.2M | 2.5M |
+| Kazakh (this) | 131,289 | 283 | 8,096 | num | 0.2M | 2.5M |
 | Icelandic | 193,170 | 333 | 12,949 | num | 0.3M | 2.4M |
 | Polish | 348,901 | 52 | 7,410 | char | 0.3M | 5.2M |
 | Czech | 261,167 | 28 | 2,713 | char | 0.1M | 3.5M |
@@ -179,7 +179,7 @@ happen to".
 
 It showed a real gap. On its `alma.test`, 122 hand-written forms, it scored
 113 and this dictionary 98 — a 20,853-entry hand-built file beating a
-130,959-entry generated one, because its rules cover the grid by construction
+131,289-entry generated one, because its rules cover the grid by construction
 while mined rules only know the chains a corpus contained.
 
 `tools/paradigm.py` generates the grid from the allomorph rules directly rather
@@ -283,7 +283,7 @@ the 2009 release catches 95.9% and this caught 80.0%: one in five silently.
 
 The gap is not one bad component. Composition was the obvious suspect and it is
 not — turning it off buys 1.0 point of catching for 0.8 of recall, roughly
-one-for-one all the way down. It is structural. 130,959 entries and 8,096
+one-for-one all the way down. It is structural. 131,289 entries and 8,096
 rules accept a far larger set of strings than 54,063 and 2,593 do, and a
 mistyped word is likelier to land on one of them. Coverage and catching are the
 same knob.
@@ -568,7 +568,7 @@ test stems filled the gap: `өткізіледі`, nine tokens in one document.
 `data/extra_forms.txt` holds the forms — generated from eliding stems and
 `й`-final verbs, kept only where Apertium gives a clean analysis, 193 in all.
 
-The verbal grid is now 12,470 forms at 100%, and running-text coverage rose to
+The verbal grid is now 12,992 forms at 100%, and running-text coverage rose to
 98.1% by token, 95.3% by type, with false accepts unmoved at 2.4%. What is left
 on the Constitution is the file's own legacy-font corruption and a handful of
 rare loanwords (`консультативтік`, `квазимемлекеттік`) that Apertium does not
