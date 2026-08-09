@@ -106,6 +106,10 @@ epenthesis:
 audit-harmony:
 	$(PY) tools/audit_harmony.py --kaznerd $(KAZNERD) -o data/harmony.tsv
 
+# The corpus-mined half of data/harmony.tsv; overwrites the file, so re-run
+# `make audit-harmony` after it to restore the apertium-driven loanword overrides
+# it merges on top. `make data` runs only this half (audit-harmony needs the
+# distrobox), so the committed harmony.tsv is the two merged.
 harmony: tests/corpus_cyr.txt
 	$(PY) tools/mine_harmony.py --kazsearch $(KAZSEARCH) --kaznerd $(KAZNERD) \
 		-o data/harmony.tsv
