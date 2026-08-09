@@ -41,7 +41,8 @@ SIBILANT = frozenset("жз")
 # asked to predict it, and the first run of this test blamed the dictionary for
 # four forms that were the generator's fault.
 STEMS = ["оқы", "сөйле", "кел", "ал", "көр", "бер", "айт", "жаз", "кет",
-         "сат", "сез", "аш", "тұрғыз"]  # сез/аш/тұрғыз cover з/ш-final passive allomorphs
+         "сат", "сез", "аш", "тұрғыз",  # сез/аш/тұрғыз cover з/ш-final passive allomorphs
+         "бар"]  # the back-р class, otherwise unrepresented — барсаңшы, барыппыз
 
 
 def pick(back: str, front: str, stem: str) -> str:
@@ -337,6 +338,15 @@ def intentive(stem: str) -> list[tuple[str, str]]:
     return out
 
 
+# The inferential perfect — the converb `-ып` predicated with a person ending:
+# `барыппын` "(apparently) I have gone", `алыппыз`. The corpus carried the
+# singular but not `-ппыз`, the first person plural, which is rare in news.
+def inferential(base: str) -> list[tuple[str, str]]:
+    converb = base + "п" if vowel_final(base) else base + pick("ып", "іп", base)
+    return [(f"evid.{name}", converb + pick(back, front, converb))
+            for name, back, front in full_person(converb) if back]
+
+
 def paradigm(stem: str) -> list[tuple[str, str]]:
     out: list[tuple[str, str]] = []
     for polarity, base in (("pos", stem), ("neg", stem + negation(stem))):
@@ -348,6 +358,7 @@ def paradigm(stem: str) -> list[tuple[str, str]]:
         out += [(f"{polarity}.{label}", word) for label, word in verbal_noun(base)]
         out += [(f"{polarity}.{label}", word) for label, word in participles(base)]
         out += [(f"{polarity}.{label}", word) for label, word in desiderative(base)]
+        out += [(f"{polarity}.{label}", word) for label, word in inferential(base)]
     out += [(label, word) for label, word in imperatives(stem)]
     out += [(label, word) for label, word in softener(stem)]
     out += [(label, word) for label, word in intentive(stem)]
